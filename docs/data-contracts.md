@@ -33,9 +33,31 @@ Faithful representation of one row as it appeared in the source file. Never clea
 | `reference_designators` | `list[str]` | Split and expanded (`R1-R4` → `R1,R2,R3,R4`) |
 | `quantity` | `int \| None` | As stated; recomputed from refdes count during normalization |
 | `source_file` | `str` | |
-| `mapping_profile` | `str` | Which EDA profile produced this mapping |
+| `mapping_profile` | `str` | Which EDA profile produced this mapping, or `"unknown"` |
+| `populate` | `bool` | `False` for a DNP / do-not-populate line — kept in the artifact, excluded from sourcing |
 
 `raw` is retained for the life of the run. It is the audit anchor.
+
+### `ColumnMapping` / `MappingProposal` / `IngestResult`
+How the `ingest` stage resolved (or failed to resolve) the columns `BomLine` needs.
+
+| Field | Type | Notes |
+|---|---|---|
+| `ColumnMapping.target_field` | `str` | `reference_designators` \| `quantity` \| `populate` |
+| `ColumnMapping.source_column` | `str \| None` | `None` when unresolved |
+| `ColumnMapping.method` | `MappingMethod` | `profile` \| `project_memory` \| `heuristic` \| `llm_fallback` \| `unresolved` |
+| `ColumnMapping.confidence` | `float` | `0.0`–`1.0` |
+| `MappingProposal.eda_profile` | `str \| None` | Matched profile name, or `None` |
+| `MappingProposal.header_row_index` | `int` | Row the real header was found on |
+| `MappingProposal.mappings` | `list[ColumnMapping]` | One per target field |
+| `MappingProposal.missing_required_fields` | `list[str]` | Non-empty blocks the file from proceeding unattended |
+| `MappingProposal.requires_confirmation` | `bool` | Always surfaced in the UI regardless of which tier resolved it |
+| `IngestResult.lines` | `list[BomLine]` | |
+| `IngestResult.mapping_proposal` | `MappingProposal` | |
+
+`ingest` never guesses: an unresolved required field produces `MappingProposal` with
+`requires_confirmation=True` and empty `reference_designators`/`quantity` on every
+affected line, not an exception and not an inferred column.
 
 ### `NormalizedRequirement`
 What the design actually needs, independent of any supplier.

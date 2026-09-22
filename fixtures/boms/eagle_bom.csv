@@ -1,0 +1,9 @@
+Part,Value,Device,Package,Description
+R1,10k,RESISTOR,R0603,Resistor
+R2,10k,RESISTOR,R0603,Resistor
+R3,4k7,RESISTOR,R0603,Resistor
+C1,100n,CAPACITOR,C0402,Capacitor
+C2,1uF,CAPACITOR,C0805,Capacitor
+U1,,LM358,SO8,Dual Op-Amp
+J1,,PINHD-1X4,1X04,Header 4-pin
+D1,LED,LED5MM,LED5MM,LED Red 5mm

@@ -5,6 +5,7 @@ from decimal import Decimal
 
 from pcbpick.contracts import (
     BomLine,
+    ColumnMapping,
     ComplianceTag,
     ComponentCategory,
     Confidence,
@@ -13,7 +14,10 @@ from pcbpick.contracts import (
     Evidence,
     ExportFormat,
     Footprint,
+    IngestResult,
     Lifecycle,
+    MappingMethod,
+    MappingProposal,
     MountingType,
     MpnRef,
     Packaging,
@@ -96,7 +100,33 @@ def make_bom_line() -> BomLine:
         quantity=1,
         source_file="board.csv",
         mapping_profile="altium",
+        populate=True,
     )
+
+
+def make_column_mapping() -> ColumnMapping:
+    return ColumnMapping(
+        target_field="reference_designators",
+        source_column="Designator",
+        method=MappingMethod.PROFILE,
+        confidence=1.0,
+    )
+
+
+def make_mapping_proposal() -> MappingProposal:
+    return MappingProposal(
+        source_file="board.csv",
+        eda_profile="altium",
+        header_row_index=0,
+        mappings=[make_column_mapping()],
+        unmapped_columns=["LibRef"],
+        missing_required_fields=[],
+        requires_confirmation=False,
+    )
+
+
+def make_ingest_result() -> IngestResult:
+    return IngestResult(lines=[make_bom_line()], mapping_proposal=make_mapping_proposal())
 
 
 def make_normalized_requirement() -> NormalizedRequirement:
@@ -213,6 +243,9 @@ def make_supplier_export() -> SupplierExport:
 
 ALL_MODEL_FACTORIES = {
     "BomLine": make_bom_line,
+    "ColumnMapping": make_column_mapping,
+    "IngestResult": make_ingest_result,
+    "MappingProposal": make_mapping_proposal,
     "NormalizedRequirement": make_normalized_requirement,
     "ParameterValue": make_parameter_value,
     "PartCandidate": make_part_candidate,

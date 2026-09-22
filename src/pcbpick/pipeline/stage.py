@@ -11,5 +11,4 @@ class Stage(Protocol):
 
     name: str
 
-    def run(self, inp: Any, ctx: StageContext) -> StageResult[Any]:
-        ...
+    def run(self, inp: Any, ctx: StageContext) -> StageResult[Any]: ...

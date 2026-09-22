@@ -6,6 +6,11 @@
       "title": "Mapping Profile",
       "type": "string"
     },
+    "populate": {
+      "default": true,
+      "title": "Populate",
+      "type": "boolean"
+    },
     "quantity": {
       "anyOf": [
         {

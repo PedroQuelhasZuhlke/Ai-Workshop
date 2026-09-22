@@ -113,3 +113,13 @@ class PlanWarningKind(StrEnum):
     NRND_LIFECYCLE = "nrnd_lifecycle"
     EOL_LIFECYCLE = "eol_lifecycle"
     HIGH_TIER_SUBSTITUTION = "high_tier_substitution"
+
+
+class MappingMethod(StrEnum):
+    """How a column mapping target was resolved, in the order the ingest stage tries them."""
+
+    PROFILE = "profile"
+    PROJECT_MEMORY = "project_memory"
+    HEURISTIC = "heuristic"
+    LLM_FALLBACK = "llm_fallback"
+    UNRESOLVED = "unresolved"

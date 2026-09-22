@@ -1,0 +1,101 @@
+{
+  "eda_profile": "kicad",
+  "header_row_index": 0,
+  "row_count": 10,
+  "rows": [
+    {
+      "row_index": 0,
+      "reference_designators": ["R1", "R2", "R3"],
+      "quantity_stated": 3,
+      "quantity_expected": 3,
+      "quantity_mismatch": false,
+      "quantity_source": "derived",
+      "dnp": false
+    },
+    {
+      "row_index": 1,
+      "reference_designators": ["R4"],
+      "quantity_stated": 1,
+      "quantity_expected": 1,
+      "quantity_mismatch": false,
+      "quantity_source": "derived",
+      "dnp": false,
+      "notes": "value in EIA shorthand notation: 4k7"
+    },
+    {
+      "row_index": 2,
+      "reference_designators": ["C1", "C2"],
+      "quantity_stated": 2,
+      "quantity_expected": 2,
+      "quantity_mismatch": false,
+      "quantity_source": "derived",
+      "dnp": false
+    },
+    {
+      "row_index": 3,
+      "reference_designators": ["C3"],
+      "quantity_stated": 1,
+      "quantity_expected": 1,
+      "quantity_mismatch": false,
+      "quantity_source": "derived",
+      "dnp": false
+    },
+    {
+      "row_index": 4,
+      "reference_designators": ["C4"],
+      "quantity_stated": 1,
+      "quantity_expected": 1,
+      "quantity_mismatch": false,
+      "quantity_source": "derived",
+      "dnp": false,
+      "notes": "value in decimal-uF notation: 0.1uF"
+    },
+    {
+      "row_index": 5,
+      "reference_designators": ["U1"],
+      "quantity_stated": 1,
+      "quantity_expected": 1,
+      "quantity_mismatch": false,
+      "quantity_source": "derived",
+      "dnp": false
+    },
+    {
+      "row_index": 6,
+      "reference_designators": ["Y1"],
+      "quantity_stated": 1,
+      "quantity_expected": 1,
+      "quantity_mismatch": false,
+      "quantity_source": "derived",
+      "dnp": false
+    },
+    {
+      "row_index": 7,
+      "reference_designators": ["J1"],
+      "quantity_stated": 1,
+      "quantity_expected": 1,
+      "quantity_mismatch": false,
+      "quantity_source": "derived",
+      "dnp": false
+    },
+    {
+      "row_index": 8,
+      "reference_designators": ["R99"],
+      "quantity_stated": 1,
+      "quantity_expected": 1,
+      "quantity_mismatch": false,
+      "quantity_source": "derived",
+      "dnp": true,
+      "notes": "explicit DNP column value 'DNP'; must be carried through and excluded from sourcing, not dropped"
+    },
+    {
+      "row_index": 9,
+      "reference_designators": ["TP1"],
+      "quantity_stated": 1,
+      "quantity_expected": 1,
+      "quantity_mismatch": false,
+      "quantity_source": "derived",
+      "dnp": false,
+      "notes": "Value is KiCad empty marker '~'; test point with no electrical value"
+    }
+  ]
+}

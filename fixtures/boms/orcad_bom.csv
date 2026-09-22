@@ -1,0 +1,11 @@
+ACME CORP - Bill of Materials Report
+Project: SENSOR-BOARD-REV-C
+Generated: 2026-01-01
+,,,,,,
+Item,Quantity,Reference,Part Number,PCB Footprint,Value,Description
+1,4,R1 R2 R3 R4,ACME-RES-0603-10K,RES0603,10k,Resistor
+2,1,R5,ACME-RES-0603-4K7,RES0603,4k7,Resistor
+3,2,C1 C2,ACME-CAP-0402-100N,CAP0402,100nF,Capacitor
+4,1,U1,ACME-IC-LM358,SOIC8,,Dual Op-Amp
+5,1,J1,ACME-CON-HDR4,HDR1X4,,Connector 4-pin header
+6,1,D1,ACME-LED-RED,LED0603,,LED Red

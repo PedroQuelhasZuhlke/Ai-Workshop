@@ -1,0 +1,118 @@
+{
+  "$defs": {
+    "ColumnMapping": {
+      "additionalProperties": false,
+      "description": "One target field resolved (or not) to a source column, and how.",
+      "properties": {
+        "confidence": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "method": {
+          "$ref": "#/$defs/MappingMethod"
+        },
+        "source_column": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Source Column"
+        },
+        "target_field": {
+          "title": "Target Field",
+          "type": "string"
+        }
+      },
+      "required": [
+        "target_field",
+        "source_column",
+        "method",
+        "confidence"
+      ],
+      "title": "ColumnMapping",
+      "type": "object"
+    },
+    "MappingMethod": {
+      "description": "How a column mapping target was resolved, in the order the ingest stage tries them.",
+      "enum": [
+        "profile",
+        "project_memory",
+        "heuristic",
+        "llm_fallback",
+        "unresolved"
+      ],
+      "title": "MappingMethod",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The column mapping resolved for one source file, always surfaced for confirmation.",
+  "properties": {
+    "eda_profile": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Eda Profile"
+    },
+    "header_row_index": {
+      "title": "Header Row Index",
+      "type": "integer"
+    },
+    "mappings": {
+      "items": {
+        "$ref": "#/$defs/ColumnMapping"
+      },
+      "title": "Mappings",
+      "type": "array"
+    },
+    "missing_required_fields": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Missing Required Fields",
+      "type": "array"
+    },
+    "requires_confirmation": {
+      "title": "Requires Confirmation",
+      "type": "boolean"
+    },
+    "schema_version": {
+      "default": "v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_file": {
+      "title": "Source File",
+      "type": "string"
+    },
+    "unmapped_columns": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Unmapped Columns",
+      "type": "array"
+    }
+  },
+  "required": [
+    "source_file",
+    "eda_profile",
+    "header_row_index",
+    "mappings",
+    "unmapped_columns",
+    "missing_required_fields",
+    "requires_confirmation"
+  ],
+  "title": "MappingProposal",
+  "type": "object"
+}

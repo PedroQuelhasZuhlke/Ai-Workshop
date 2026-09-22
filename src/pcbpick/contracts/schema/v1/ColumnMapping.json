@@ -1,0 +1,52 @@
+{
+  "$defs": {
+    "MappingMethod": {
+      "description": "How a column mapping target was resolved, in the order the ingest stage tries them.",
+      "enum": [
+        "profile",
+        "project_memory",
+        "heuristic",
+        "llm_fallback",
+        "unresolved"
+      ],
+      "title": "MappingMethod",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One target field resolved (or not) to a source column, and how.",
+  "properties": {
+    "confidence": {
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Confidence",
+      "type": "number"
+    },
+    "method": {
+      "$ref": "#/$defs/MappingMethod"
+    },
+    "source_column": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Source Column"
+    },
+    "target_field": {
+      "title": "Target Field",
+      "type": "string"
+    }
+  },
+  "required": [
+    "target_field",
+    "source_column",
+    "method",
+    "confidence"
+  ],
+  "title": "ColumnMapping",
+  "type": "object"
+}

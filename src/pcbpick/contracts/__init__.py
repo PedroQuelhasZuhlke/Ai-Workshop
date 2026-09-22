@@ -22,6 +22,7 @@ from pcbpick.contracts.enums import (
     DecisionMode,
     ExportFormat,
     Lifecycle,
+    MappingMethod,
     MountingType,
     Packaging,
     PlanWarningKind,
@@ -30,6 +31,7 @@ from pcbpick.contracts.enums import (
     ValueSource,
 )
 from pcbpick.contracts.export import SupplierExport
+from pcbpick.contracts.mapping import ColumnMapping, IngestResult, MappingProposal
 from pcbpick.contracts.offer import SupplierOffer
 from pcbpick.contracts.plan import (
     PlanLine,
@@ -47,6 +49,9 @@ __all__ = [
     "CATEGORY_PARAMETERS",
     "CategoryParameterSpec",
     "BomLine",
+    "ColumnMapping",
+    "IngestResult",
+    "MappingProposal",
     "NormalizedRequirement",
     "ParameterValue",
     "PartCandidate",
@@ -72,6 +77,7 @@ __all__ = [
     "ComplianceTag",
     "DecisionMode",
     "ValueSource",
+    "MappingMethod",
     "MountingType",
     "ExportFormat",
     "PlanWarningKind",

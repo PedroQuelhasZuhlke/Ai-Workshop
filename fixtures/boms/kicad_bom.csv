@@ -1,0 +1,11 @@
+Reference,Value,Datasheet,Footprint,Qty,DNP,Exclude from BOM,MPN,Manufacturer
+"R1, R2, R3",10k,~,Resistor_SMD:R_0603_1608Metric,3,,,RC0603FR-0710KL,Yageo
+R4,4k7,~,Resistor_SMD:R_0402_1005Metric,1,,,RC0402FR-074K7L,Yageo
+"C1, C2",100n,~,Capacitor_SMD:C_0402_1005Metric,2,,,GRM155R71C104KA88D,Murata
+C3,10uF,~,Capacitor_SMD:C_0805_2012Metric,1,,,GRM21BR61C106KE15L,Murata
+C4,0.1uF,~,Capacitor_SMD:C_0603_1608Metric,1,,,GRM188R71C104KA01D,Murata
+U1,LM358,https://www.ti.com/lit/ds/symlink/lm358.pdf,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,1,,,LM358DR,Texas Instruments
+Y1,16MHz,~,Crystal:Crystal_SMD_3225-4Pin_3.2x2.5mm,1,,,ABM3-16.000MHZ-D2Y-T,Abracon
+J1,Conn_01x04,~,Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical,1,,,,
+R99,DNP,~,Resistor_SMD:R_0603_1608Metric,1,DNP,,RC0603FR-0710KL,Yageo
+TP1,~,~,TestPoint:TestPoint_Pad_1.5x1.5mm,1,,,,

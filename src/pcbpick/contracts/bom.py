@@ -17,3 +17,4 @@ class BomLine(BaseModel):
     quantity: int | None
     source_file: str
     mapping_profile: str
+    populate: bool = True

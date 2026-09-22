@@ -1,0 +1,7 @@
+Reference,Value,Datasheet,Footprint,Qty,DNP,Exclude from BOM,MPN,Manufacturer
+R1-R4,10k,~,Resistor_SMD:R_0603_1608Metric,4,,,RC0603FR-0710KL,Yageo
+"C1,C3",100nF,~,Capacitor_SMD:C_0402_1005Metric,2,,,GRM155R71C104KA88D,Murata
+"U1-U3,U5",LM324,~,Package_SO:TSSOP-14_4.4x5mm_P0.65mm,4,,,LM324DR,Texas Instruments
+"R10,R11,R12",1k,~,Resistor_SMD:R_0603_1608Metric,4,,,RC0603FR-071KL,Yageo
+R20,10k,~,Resistor_SMD:R_0603_1608Metric,1,DNP,,RC0603FR-0710KL,Yageo
+C10,1uF,~,Capacitor_SMD:C_0805_2012Metric,1,,,GRM21BR61C106KE15L,Murata

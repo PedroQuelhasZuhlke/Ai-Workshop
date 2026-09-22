@@ -1,4 +1,5 @@
 ---
+name: contract-architect
 description: 'Use when creating or changing Pydantic contract models, JSON Schema, enums, or artifact types in src/pcbpick/contracts. Handles schema versioning, migrations, fixture and eval updates for breaking changes.'
 tools: [read, edit, search, execute]
 ---

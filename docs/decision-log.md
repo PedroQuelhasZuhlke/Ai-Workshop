@@ -98,6 +98,51 @@ Packaged into skills so agents inherit it rather than rediscovering it:
 - **"Better" is not always safe** — lower ESR can destabilize an LDO requiring minimum
   ESR; crystal load capacitance mismatch prevents start-up. Windowed parameters are
   hard constraints in both directions.
+
+---
+
+## 7. M1 — Ingest (2026-09-22)
+
+**Scope implemented:** hardened CSV/XLSX readers, header-row detection, EDA profile
+matching (Altium, KiCad modern/legacy, Eagle/Fusion, OrCAD/Allegro), a four-tier
+column-mapping engine, reference-designator expansion/validation, quantity
+reconciliation, DNP handling, and per-project mapping persistence.
+
+**Contract additions:** `ColumnMapping`, `MappingProposal`, `IngestResult` (the
+`ingest` stage's actual output — `BomLine[]` plus the mapping that produced them);
+`MappingMethod` enum; `BomLine.populate: bool = True` (additive, default preserves
+existing semantics). `architecture.md`'s stage table updated to match.
+
+**Decision: column-mapping LLM fallback deferred, not skipped.** The roadmap calls
+for a three-tier mapping engine ending in an LLM fallback. `llm-calls.instructions.md`
+sanctions exactly two call sites (`normalize_fallback`, `candidate_rationale`) and
+requires a documented decision to add a third — and no `src/pcbpick/llm/` package,
+provider client, or prompt-template infrastructure exists yet (that lands with
+`normalize`'s fallback in M2). Building a third live call site ahead of that
+plumbing, untested against a real provider, would violate "structured output only"
+and "no live model calls in tests" for a feature nothing yet depends on. Resolution:
+the mapping engine has four tiers — profile → project memory → heuristic → LLM
+fallback — where the last is a documented extension point (`MappingMethod.LLM_FALLBACK`
+exists in the enum, resolution falls through to `UNRESOLVED` today). When M2 wires
+`src/pcbpick/llm/`, column-mapping can reuse that plumbing instead of duplicating it.
+An unresolved required field never blocks the pipeline with an exception — it
+produces a `MappingProposal` with `requires_confirmation=True` and empty
+`reference_designators`/`quantity`, exactly the "propose, never guess" behavior the
+`bom-ingest` skill requires.
+
+**Decision: mapping-profile persistence is read-through only in M1.** `pcbpick run`
+accepts an optional `--project-id` that loads a previously confirmed mapping via
+`MappingProfileStore` (JSON on disk, keyed by project id) so a repeat BOM revision
+resolves at `MappingMethod.PROJECT_MEMORY` confidence instead of re-guessing. The
+store's `save()` is not called anywhere yet — persisting an *unconfirmed* heuristic
+guess as though an engineer approved it would itself be a guess. Wiring `save()` to
+an actual confirmation action is a M6 (web app) concern.
+
+**Decision: `.xls` (legacy binary) reader deferred.** The roadmap lists CSV/XLSX/XLS.
+No fixture exercises `.xls` and no library in the dependency set parses it without
+adding `xlrd` for a code path nothing tests. `readers.read_grid` raises
+`IngestFileError` for it today rather than shipping unexercised code.
+
 - **Tantalum voltage derating (≤50%)** reflects an ignition failure mode.
 - **SPQ is independent of MOQ** — suppliers ship whole packs; ignoring SPQ produces
   quotes that do not match the invoice.

@@ -1,4 +1,4 @@
-"""Orchestrates registered stages against a run directory. Zero stages until M1."""
+"""Orchestrates registered stages against a run directory."""
 
 import hashlib
 import json
@@ -10,22 +10,29 @@ from typing import Any
 from uuid import uuid4
 
 from pcbpick.errors import RunNotFoundError, StageNotFoundError
+from pcbpick.ingest.mapping_store import MappingProfileStore
+from pcbpick.ingest.stage import IngestInput, IngestStage
 from pcbpick.pipeline.context import PipelineConfig, StageContext
 from pcbpick.pipeline.models import RunManifest, StageMeta
 from pcbpick.pipeline.results import StageResult
 from pcbpick.pipeline.stage import Stage
 
-# Registered in execution order. The first entries land with the ingest stage in M1.
-STAGES: list[Stage] = []
+# Registered in execution order. The rest land with normalize/classify in M2.
+STAGES: list[Stage] = [IngestStage()]
+
+DEFAULT_MAPPING_PROFILES_ROOT = Path("mapping_profiles")
 
 
 class PipelineRunner:
     """Runs `STAGES` in order against a source file, writing artifacts as it goes."""
 
-    def __init__(self, runs_root: Path) -> None:
+    def __init__(self, runs_root: Path, mapping_profiles_root: Path | None = None) -> None:
         self._runs_root = runs_root
+        self._mapping_profiles_root = mapping_profiles_root or DEFAULT_MAPPING_PROFILES_ROOT
 
-    def run(self, source_file: Path, *, run_id: str | None = None) -> str:
+    def run(
+        self, source_file: Path, *, run_id: str | None = None, project_id: str | None = None
+    ) -> str:
         run_id = run_id or uuid4().hex
         run_dir = self._runs_root / run_id
         run_dir.mkdir(parents=True, exist_ok=False)
@@ -38,8 +45,16 @@ class PipelineRunner:
             source_file_sha256=_sha256_file(source_file),
         )
 
+        project_mapping = None
+        if project_id is not None:
+            project_mapping = MappingProfileStore(self._mapping_profiles_root).load(project_id)
+
         ctx = StageContext(run_id=run_id, now=now, rng=Random(run_id), config=PipelineConfig())
-        payload: Any = None
+        payload: Any = IngestInput(
+            file_name=source_file.name,
+            content=source_file.read_bytes(),
+            project_mapping=project_mapping,
+        )
         stage_metas: list[StageMeta] = []
         for seq, stage in enumerate(STAGES):
             input_hash = _hash_json(payload)
@@ -112,8 +127,7 @@ def _write_stage_artifact(
         serialized_output = output.model_dump(mode="json")
     elif isinstance(output, list):
         serialized_output = [
-            item.model_dump(mode="json") if hasattr(item, "model_dump") else item
-            for item in output
+            item.model_dump(mode="json") if hasattr(item, "model_dump") else item for item in output
         ]
     else:
         serialized_output = output

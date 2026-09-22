@@ -1,4 +1,5 @@
 ---
+name: supplier-adapter-builder
 description: 'Use when building or debugging a supplier catalog adapter for Mouser, DigiKey, Farnell or the fixture adapter. Handles the SupplierAdapter protocol, snapshot caching, rate limiting, credential handling and offer normalization.'
 tools: [read, edit, search, execute]
 ---

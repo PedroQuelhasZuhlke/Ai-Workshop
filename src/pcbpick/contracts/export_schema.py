@@ -20,6 +20,7 @@ from pcbpick.contracts.common import (
     PriceBreak,
 )
 from pcbpick.contracts.export import SupplierExport
+from pcbpick.contracts.mapping import ColumnMapping, IngestResult, MappingProposal
 from pcbpick.contracts.offer import SupplierOffer
 from pcbpick.contracts.plan import (
     PlanLine,
@@ -34,6 +35,9 @@ from pcbpick.contracts.version import SCHEMA_VERSION
 
 MODELS: tuple[type[BaseModel], ...] = (
     BomLine,
+    ColumnMapping,
+    IngestResult,
+    MappingProposal,
     NormalizedRequirement,
     ParameterValue,
     PartCandidate,

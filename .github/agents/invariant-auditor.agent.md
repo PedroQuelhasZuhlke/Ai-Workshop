@@ -1,4 +1,5 @@
 ---
+name: invariant-auditor
 description: 'Use to audit a change or the whole codebase for violations of the engineering and procurement invariants — LLM doing arithmetic or ranking, float money, silent defaults, missing provenance, relaxed safety rules, live network calls in tests, unsanitized export cells. Read-only review.'
 tools: [read, search]
 ---

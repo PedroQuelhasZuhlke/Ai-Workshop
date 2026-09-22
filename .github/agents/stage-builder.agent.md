@@ -1,4 +1,5 @@
 ---
+name: stage-builder
 description: 'Use when implementing or modifying a pipeline stage — ingest, normalize, classify, expand, source, policy, evaluate, resolve, plan, or export. Enforces stage purity, determinism, artifact writing, and the code-decides boundary.'
 tools: [read, edit, search, execute, todo]
 ---

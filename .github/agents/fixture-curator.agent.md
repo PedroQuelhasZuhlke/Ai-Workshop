@@ -1,4 +1,5 @@
 ---
+name: fixture-curator
 description: 'Use when creating BOM fixtures, catalog snapshots, or golden-BOM eval cases. Builds the messy real-world test data the pipeline must survive and the scored expectations that keep rule and prompt changes honest.'
 tools: [read, edit, search, execute]
 ---

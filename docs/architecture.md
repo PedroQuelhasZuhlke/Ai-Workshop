@@ -66,7 +66,7 @@ def run(inp: InputArtifact, ctx: StageContext) -> StageResult[OutputArtifact]:
 
 | Stage | Input | Output | LLM |
 |---|---|---|---|
-| `ingest` | file bytes | `BomLine[]` | fallback only |
+| `ingest` | file bytes | `IngestResult` (`BomLine[]` + `MappingProposal`) | fallback only, not yet wired (M1) |
 | `normalize` | `BomLine[]` | `NormalizedRequirement[]` | fallback only |
 | `classify` | `NormalizedRequirement[]` | same, categorized | fallback only |
 | `expand` | `NormalizedRequirement[]` | `SourcingQuery[]` | no |
