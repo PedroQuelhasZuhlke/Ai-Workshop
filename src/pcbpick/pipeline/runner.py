@@ -12,13 +12,14 @@ from uuid import uuid4
 from pcbpick.errors import RunNotFoundError, StageNotFoundError
 from pcbpick.ingest.mapping_store import MappingProfileStore
 from pcbpick.ingest.stage import IngestInput, IngestStage
+from pcbpick.normalize.stage import NormalizeStage
 from pcbpick.pipeline.context import PipelineConfig, StageContext
 from pcbpick.pipeline.models import RunManifest, StageMeta
 from pcbpick.pipeline.results import StageResult
 from pcbpick.pipeline.stage import Stage
 
-# Registered in execution order. The rest land with normalize/classify in M2.
-STAGES: list[Stage] = [IngestStage()]
+# Registered in execution order. The rest land with sourcing/policy in later milestones.
+STAGES: list[Stage] = [IngestStage(), NormalizeStage()]
 
 DEFAULT_MAPPING_PROFILES_ROOT = Path("mapping_profiles")
 

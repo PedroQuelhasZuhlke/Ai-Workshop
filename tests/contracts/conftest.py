@@ -37,7 +37,7 @@ from pcbpick.contracts import (
     UnfilledRequirement,
     ValueSource,
 )
-from pcbpick.contracts.requirement import NormalizedRequirement
+from pcbpick.contracts.requirement import NormalizedRequirement, NormalizedRequirementFragment
 
 FIXED_TIME = datetime(2026, 9, 22, 12, 0, 0, tzinfo=UTC)
 
@@ -146,6 +146,25 @@ def make_normalized_requirement() -> NormalizedRequirement:
     )
 
 
+def make_normalized_requirement_fragment() -> NormalizedRequirementFragment:
+    fragment_parameter = ParameterValue(
+        value=Decimal("100"),
+        unit="ohm",
+        tolerance_pct=None,
+        min=None,
+        max=None,
+        raw_text="about 100 ohm",
+        source=ValueSource.LLM_INFERRED,
+    )
+    return NormalizedRequirementFragment(
+        category=ComponentCategory.RESISTOR,
+        parameters={"resistance": fragment_parameter},
+        footprint=None,
+        compliance_required=[],
+        notes="inferred from free-text description",
+    )
+
+
 def make_supplier_offer() -> SupplierOffer:
     return SupplierOffer(
         supplier=SupplierId.FIXTURE,
@@ -247,6 +266,7 @@ ALL_MODEL_FACTORIES = {
     "IngestResult": make_ingest_result,
     "MappingProposal": make_mapping_proposal,
     "NormalizedRequirement": make_normalized_requirement,
+    "NormalizedRequirementFragment": make_normalized_requirement_fragment,
     "ParameterValue": make_parameter_value,
     "PartCandidate": make_part_candidate,
     "SupplierOffer": make_supplier_offer,

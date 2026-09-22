@@ -1,0 +1,269 @@
+{
+  "eda_profile": "unknown",
+  "header_row_index": 0,
+  "row_count": 19,
+  "notes": "Ad-hoc header (Designator/Value/Description/Package/Qty/Manufacturer/MPN) deliberately avoids matching any named EDA profile (verified: match_eda_profile returns None -- overlap with the altium signature is only designator+description+manufacturer = 3/10, below the 0.5 threshold) while every column still resolves via the heuristic synonym tier. This file feeds the not-yet-built normalize/classify stages; expected_* fields below are the hand-verified oracle, not current pipeline output.",
+  "rows": [
+    {
+      "row_index": 0,
+      "case": "clean_rkm_resistor_control",
+      "reference_designators": ["R30"],
+      "expected_category": "resistor",
+      "expected_parameters": {
+        "resistance": { "value": "4700", "unit": "ohm" },
+        "tolerance_pct": { "value": "1", "unit": "percent" }
+      },
+      "expected_unresolved": [],
+      "expected_confidence_tier": "high",
+      "expected_criticality": "standard",
+      "notes": "RKM '4k7' -> 4.7 kOhm = 4700 ohm (skill trap table, unambiguous). 'Resistor 1%' states tolerance explicitly. Footprint RESC1608X55N uses the IPC 'RESC' prefix with metric 1608 (=imperial 0603 per the passive package table) so the dimension system is stated, not guessed. Control row: single correct deterministic answer."
+    },
+    {
+      "row_index": 1,
+      "case": "rkm_leading_r_control",
+      "reference_designators": ["R31"],
+      "expected_category": "resistor",
+      "expected_parameters": {
+        "resistance": { "value": "0.47", "unit": "ohm" },
+        "tolerance_pct": { "value": "5", "unit": "percent" }
+      },
+      "expected_unresolved": [],
+      "expected_confidence_tier": "high",
+      "expected_criticality": "standard",
+      "notes": "'R47': leading digit group is empty (grammar ^(\\d*)([RKMGpnu\\u00b5m])(\\d*)$), so 'empty group means 0.x' applies -> 0.47 ohm, matching the value-notation table's 'R47, 0R47 -> 0.47 Ohm' entry exactly. Paired with row_index 2 (4R7) to prove leading-R vs embedded-R placement is distinguished correctly. Control row, not ambiguous."
+    },
+    {
+      "row_index": 2,
+      "case": "rkm_embedded_r_control",
+      "reference_designators": ["R32"],
+      "expected_category": "resistor",
+      "expected_parameters": {
+        "resistance": { "value": "4.7", "unit": "ohm" },
+        "tolerance_pct": { "value": "5", "unit": "percent" }
+      },
+      "expected_unresolved": [],
+      "expected_confidence_tier": "high",
+      "expected_criticality": "standard",
+      "notes": "'4R7': digits before and after the R -> 4.7 ohm (skill trap table: '4R7 vs 4.7R vs 4k7 -> 4.7 Ohm, 4.7 Ohm, 4700 Ohm'). Contrast with row_index 1 (R47 = 0.47 ohm): same three characters reordered, 10x apart. Control row, not ambiguous."
+    },
+    {
+      "row_index": 3,
+      "case": "resistor_1M_control",
+      "reference_designators": ["R33"],
+      "expected_category": "resistor",
+      "expected_parameters": {
+        "resistance": { "value": "1000000", "unit": "ohm" },
+        "tolerance_pct": { "value": "5", "unit": "percent" }
+      },
+      "expected_unresolved": [],
+      "expected_confidence_tier": "high",
+      "expected_criticality": "standard",
+      "notes": "'1M' on a RESISTOR is unambiguous RKM notation: trailing group empty means a whole number, 'M' = mega -> 1,000,000 ohm. This is the control that proves resistors are NOT subject to the capacitor '1M' trap (row_index 5) -- category must be known before a trap applies. Tolerance '+/-5%' stated explicitly. Not ambiguous."
+    },
+    {
+      "row_index": 4,
+      "case": "capacitor_bare_3digit_code_ambiguous",
+      "reference_designators": ["C30"],
+      "expected_category": "capacitor",
+      "expected_parameters": {},
+      "expected_unresolved": [
+        "parameters.capacitance",
+        "parameters.voltage_rating",
+        "parameters.dielectric"
+      ],
+      "expected_confidence_tier": "low",
+      "expected_criticality": "standard",
+      "notes": "Bare '104' in a generic Value column (not a column explicitly marked as a code column) is ambiguous between the capacitor 3-digit pF code (10 x 10^4 pF = 100 nF) and a literal/careless entry (e.g. someone meaning '104' in some other unit). Per the skill this MUST be flagged, not guessed either way -- there is no single correct deterministic reading. Description and Package are empty, so voltage_rating and dielectric (both required for capacitor per categories.py) are genuinely absent -- also unresolved, but for a different reason (missing, not ambiguous)."
+    },
+    {
+      "row_index": 5,
+      "case": "capacitor_1M_ambiguous",
+      "reference_designators": ["C31"],
+      "expected_category": "capacitor",
+      "expected_parameters": {},
+      "expected_unresolved": [
+        "parameters.capacitance",
+        "parameters.voltage_rating",
+        "parameters.dielectric"
+      ],
+      "expected_confidence_tier": "low",
+      "expected_criticality": "standard",
+      "notes": "'1M' on a CAPACITOR is the skill's canonical known trap: could be 1 Mohm misfiled from a resistor BOM, 1 mF (milli, case-sensitive m vs M confusion), or a bare EIA +/-20% tolerance-code fragment with no digits. No other context disambiguates. Must be flagged, not guessed. voltage_rating and dielectric also absent (Description/Package empty) -> unresolved for the separate reason of being missing entirely."
+    },
+    {
+      "row_index": 6,
+      "case": "resistor_missing_tolerance_jumper",
+      "reference_designators": ["R34"],
+      "expected_category": "resistor",
+      "expected_parameters": {
+        "resistance": { "value": "0", "unit": "ohm" }
+      },
+      "expected_unresolved": ["parameters.tolerance_pct"],
+      "expected_confidence_tier": "low",
+      "expected_criticality": "standard",
+      "notes": "'0R' is a valid, unambiguous 0 ohm jumper (skill: '0R / 0 Ohm: A jumper. Valid resistance of 0'). Resistance resolves cleanly. But tolerance_pct is required for every resistor per categories.py and is genuinely not stated anywhere (not in Value, not in Description 'Resistor jumper', no dedicated tolerance column) -- this is a real missing-required-field case, not an ambiguity, and must block on parameters.tolerance_pct rather than defaulting to 0% or omitting the check because the part is a jumper."
+    },
+    {
+      "row_index": 7,
+      "case": "capacitor_tolerance_letter_table_control",
+      "reference_designators": ["C32"],
+      "expected_category": "capacitor",
+      "expected_parameters": {
+        "capacitance": { "value": "0.0000022", "unit": "farad" },
+        "tolerance_pct": { "value": "10", "unit": "percent" },
+        "voltage_rating": { "value": "50", "unit": "volt" }
+      },
+      "expected_unresolved": [],
+      "expected_confidence_tier": "high",
+      "expected_criticality": "standard",
+      "notes": "'225K': 3-digit code 22 x 10^5 pF = 2,200,000 pF = 2.2uF = 0.0000022 F (same pattern as the skill's '475 -> 4.7uF' example). Trailing 'K' MUST use the capacitor EIA tolerance table (K=+/-10%), not the resistor IEC 60062 table (where K also means +/-10%, so this row alone would not catch a table mix-up, but combined with row_index 8 -- which needs the opposite category-specific table -- proves the tables are looked up per-category rather than reused). Description 'Capacitor 50V X7R' resolves voltage_rating=50V and dielectric=X7R (Class II, not shown in expected_parameters since it is non-numeric, but is resolved -- NOT unresolved). Fully resolvable, not ambiguous."
+    },
+    {
+      "row_index": 8,
+      "case": "resistor_capacitor_code_collision_ambiguous",
+      "reference_designators": ["R35"],
+      "expected_category": "resistor",
+      "expected_parameters": {},
+      "expected_unresolved": ["parameters.resistance", "parameters.tolerance_pct"],
+      "expected_confidence_tier": "low",
+      "expected_criticality": "standard",
+      "notes": "'103K' on a RESISTOR has two genuinely plausible, mutually exclusive readings with no way to pick deterministically from a generic Value column: (a) RKM shorthand '103' + multiplier letter 'K' -> 103 x 1000 = 103,000 ohm (103 kOhm), no tolerance stated; (b) a 3-digit-code-plus-tolerance-letter marking by analogy with chip resistor networks -- first two digits '10' x 10^3 = 10,000 ohm (10 kOhm) with trailing 'K' reinterpreted as the IEC 60062 resistor tolerance letter (+/-10%). The two readings are ~10.3x apart (103 kOhm vs 10 kOhm) -- both resistance AND tolerance_pct depend on which reading is chosen, so both are unresolved rather than picking one and leaving the other blank."
+    },
+    {
+      "row_index": 9,
+      "case": "unknown_package_code_unresolved",
+      "reference_designators": ["U20"],
+      "expected_category": "module",
+      "expected_parameters": {},
+      "expected_unresolved": ["footprint.package_code"],
+      "expected_confidence_tier": "low",
+      "expected_criticality": "standard",
+      "notes": "Description '2.4GHz RF Transceiver Module' gives an unambiguous category signal (module; ComponentCategory.MODULE has no required parameters). Package 'XQFN2020-PROP' is not a recognized passive code, not a known SOT/SOIC/QFN/BGA family spelling, and not any other known package family -- it must be flagged on footprint.package_code, not silently accepted as a QFN variant or dropped from the artifact."
+    },
+    {
+      "row_index": 10,
+      "case": "bare_package_system_ambiguous",
+      "reference_designators": ["R36"],
+      "expected_category": "resistor",
+      "expected_parameters": {
+        "resistance": { "value": "10000", "unit": "ohm" },
+        "tolerance_pct": { "value": "1", "unit": "percent" }
+      },
+      "expected_unresolved": ["footprint.package_system"],
+      "expected_confidence_tier": "low",
+      "expected_criticality": "standard",
+      "notes": "'10k' + 'Resistor 1%' resolve resistance and tolerance cleanly. Package is the bare digits '0603' with no 'Metric' word and no IPC prefix (RESC/CAPC/INDC) to state the system. Per the value-notation table, metric 0603 = 0.6x0.3mm (same footprint size as imperial 0201) while imperial 0603 = 1.6x0.8mm (=metric 1608) -- roughly 2.7x the linear dimension and ~7x the pad area apart. Must be flagged on footprint.package_system and resolved via a recorded convention (e.g. EDA tool default), never silently assumed to be one or the other."
+    },
+    {
+      "row_index": 11,
+      "case": "conflicting_compliance_tokens",
+      "reference_designators": ["U21"],
+      "expected_category": "ic_digital",
+      "expected_parameters": {},
+      "expected_unresolved": ["compliance_required"],
+      "expected_confidence_tier": "low",
+      "expected_criticality": "standard",
+      "notes": "Description states both 'RoHS compliant' and, in the same text, 'leaded SnPb finish, non-RoHS' -- SnPb (leaded) solder is normally incompatible with RoHS (which restricts lead), so the two assertions directly conflict. compliance_required must come back empty/unasserted rather than the parser guessing RoHS=true or RoHS=false. ComponentCategory.IC_DIGITAL has no required parameters, so this row exists purely to exercise the compliance-conflict path; footprint LQFP-48 is an unambiguous, well-known package and is not the focus."
+    },
+    {
+      "row_index": 12,
+      "case": "micro_sign_variant_u00b5_control",
+      "reference_designators": ["C33"],
+      "expected_category": "capacitor",
+      "expected_parameters": {
+        "capacitance": { "value": "0.0000047", "unit": "farad" },
+        "voltage_rating": { "value": "16", "unit": "volt" }
+      },
+      "expected_unresolved": [],
+      "expected_confidence_tier": "high",
+      "expected_criticality": "standard",
+      "notes": "'4\u00b57' uses U+00B5 MICRO SIGN. RKM: 4.7 -> 4.7uF = 0.0000047 F. Description 'Capacitor 16V X5R' resolves voltage_rating and dielectric (X5R, Class II, non-numeric so not shown in expected_parameters). Must produce an identical result to row_index 13 and 14, which spell the same value with U+03BC and ASCII 'u' respectively -- proving unicode micro-sign normalization. Control row, not ambiguous."
+    },
+    {
+      "row_index": 13,
+      "case": "micro_sign_variant_u03bc_control",
+      "reference_designators": ["C34"],
+      "expected_category": "capacitor",
+      "expected_parameters": {
+        "capacitance": { "value": "0.0000047", "unit": "farad" },
+        "voltage_rating": { "value": "16", "unit": "volt" }
+      },
+      "expected_unresolved": [],
+      "expected_confidence_tier": "high",
+      "expected_criticality": "standard",
+      "notes": "'4\u03bc7' uses U+03BC GREEK SMALL LETTER MU (a common mis-encoding of the micro sign). Must resolve identically to row_index 12 and 14: 4.7uF = 0.0000047 F, voltage_rating 16 V. Control row, not ambiguous."
+    },
+    {
+      "row_index": 14,
+      "case": "micro_sign_variant_ascii_u_control",
+      "reference_designators": ["C35"],
+      "expected_category": "capacitor",
+      "expected_parameters": {
+        "capacitance": { "value": "0.0000047", "unit": "farad" },
+        "voltage_rating": { "value": "16", "unit": "volt" }
+      },
+      "expected_unresolved": [],
+      "expected_confidence_tier": "high",
+      "expected_criticality": "standard",
+      "notes": "'4u7' uses plain ASCII 'u' in place of the micro sign, the most common real-world spelling. Must resolve identically to row_index 12 and 13: 4.7uF = 0.0000047 F, voltage_rating 16 V. Control row, not ambiguous."
+    },
+    {
+      "row_index": 15,
+      "case": "fuse_safety_critical_control",
+      "reference_designators": ["F1"],
+      "expected_category": "fuse",
+      "expected_parameters": {
+        "current_rating": { "value": "5", "unit": "ampere" },
+        "voltage_rating": { "value": "250", "unit": "volt" }
+      },
+      "expected_unresolved": [],
+      "expected_confidence_tier": "high",
+      "expected_criticality": "safety",
+      "notes": "Value '5A' (dedicated column) and Description 'Fast-blow fuse 250V' (free text) together give both parameters ComponentCategory.FUSE requires (current_rating, voltage_rating), cleanly and without ambiguity. Exists so the downstream classifier can be exercised on the 'fuse = always safety-critical, never auto-substituted' invariant, not to test value-parsing edge cases."
+    },
+    {
+      "row_index": 16,
+      "case": "y_class_capacitor_safety_critical",
+      "reference_designators": ["C40"],
+      "expected_category": "capacitor",
+      "expected_parameters": {
+        "capacitance": { "value": "0.0000000022", "unit": "farad" },
+        "voltage_rating": { "value": "275", "unit": "volt" }
+      },
+      "expected_unresolved": ["parameters.dielectric"],
+      "expected_confidence_tier": "low",
+      "expected_criticality": "safety",
+      "notes": "'2n2' -> 2.2 nF = 0.0000000022 F, clean RKM parse. Description 'EMI Suppression Capacitor Y2 275VAC' gives voltage_rating=275V and, crucially, the safety classification 'Y2' that must drive criticality=safety (Y/X-class EMI suppression capacitors are never auto-substituted per the repo's non-negotiable invariants). NOTE: 'Y2' is a safety agency class, NOT one of the EIA ceramic dielectric codes (X7R/C0G/Y5V/Z5U/etc.) from the value-notation reference -- the required 'dielectric' field (categories.py requires it for every capacitor) is therefore genuinely not stated by this row and is correctly left unresolved, even though the row is otherwise a clean, non-ambiguous safety-classification control. This is a hand-verified nuance, not an oversight: do not backfill dielectric from the Y2 marking."
+    },
+    {
+      "row_index": 17,
+      "case": "asymmetric_tolerance_z_code",
+      "reference_designators": ["C41"],
+      "expected_category": "capacitor",
+      "expected_parameters": {
+        "capacitance": {
+          "value": "0.0000022",
+          "unit": "farad",
+          "min": "0.00000176",
+          "max": "0.00000396"
+        },
+        "voltage_rating": { "value": "50", "unit": "volt" }
+      },
+      "expected_unresolved": [],
+      "expected_confidence_tier": "high",
+      "expected_criticality": "standard",
+      "notes": "'225Z': 3-digit code -> nominal 2.2uF = 0.0000022 F (same digits as row_index 7's '225K'). Trailing 'Z' is the EIA capacitor tolerance code for +80%/-20%, an ASYMMETRIC bound, not a symmetric percentage -- tolerance_pct is intentionally left unset and the bound is instead expressed as min/max: min = nominal x 0.80 = 0.00000176 F, max = nominal x 1.80 = 0.00000396 F. This is NOT flagged unresolved: the letter code fully and deterministically specifies the tolerance, it is simply asymmetric. Description 'Capacitor 50V Z5U' resolves voltage_rating=50V and dielectric=Z5U (Class III, non-numeric, not shown in expected_parameters but resolved). Hand-verified, single correct answer."
+    },
+    {
+      "row_index": 18,
+      "case": "genuinely_unparseable_llm_fallback",
+      "reference_designators": ["U99"],
+      "expected_category": "unknown",
+      "expected_parameters": {},
+      "expected_unresolved": ["category"],
+      "expected_confidence_tier": "low",
+      "expected_criticality": "standard",
+      "notes": "Value and Package are both empty; Description 'Special order widget XJ-9000, see ECN-4471' carries no recognizable value token, no known category keyword, and the U-prefix designator alone is not category-discriminating (U is used for ICs, modules, and other assemblies alike). Deterministic parsing has nothing to work with. Expected to exercise the LLM-fallback path: if the fallback is unavailable or fails, category must land as 'unknown' (ComponentCategory.UNKNOWN, no required parameters, so nothing else is formally blocking) with category itself recorded in unresolved pending engineer input or a successful LLM-fallback attempt. Confidence must be low regardless of fallback outcome, since even a successful LLM inference here is `source: llm_inferred` and never satisfies a hard check on its own."
+    }
+  ]
+}

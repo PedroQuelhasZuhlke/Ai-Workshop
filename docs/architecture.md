@@ -19,9 +19,8 @@ flowchart TB
     end
 
     subgraph PIPE["Pipeline (pure stages)"]
-        P1[ingest] --> P2[normalize]
-        P2 --> P3[classify]
-        P3 --> P4[expand]
+        P1[ingest] --> P2[normalize + classify]
+        P2 --> P4[expand]
         P4 --> P5[source]
         P5 --> P6[policy]
         P6 --> P7[evaluate]
@@ -67,8 +66,7 @@ def run(inp: InputArtifact, ctx: StageContext) -> StageResult[OutputArtifact]:
 | Stage | Input | Output | LLM |
 |---|---|---|---|
 | `ingest` | file bytes | `IngestResult` (`BomLine[]` + `MappingProposal`) | fallback only, not yet wired (M1) |
-| `normalize` | `BomLine[]` | `NormalizedRequirement[]` | fallback only |
-| `classify` | `NormalizedRequirement[]` | same, categorized | fallback only |
+| `normalize` | `IngestResult` | `NormalizedRequirement[]` | fallback only, for rows with no usable category signal at all (M2) |
 | `expand` | `NormalizedRequirement[]` | `SourcingQuery[]` | no |
 | `source` | `SourcingQuery[]` | `PartCandidate[]` | no |
 | `policy` | `PartCandidate[]` | filtered + tiered | no |
@@ -79,6 +77,14 @@ def run(inp: InputArtifact, ctx: StageContext) -> StageResult[OutputArtifact]:
 
 Note that `policy` runs **before** `evaluate`. The model never sees a candidate that
 violates an engineering rule, so it cannot argue for one.
+
+**`normalize` and `classify` are one registered stage, not two** (`src/pcbpick/normalize/stage.py:NormalizeStage`).
+Category routing (`src/pcbpick/classify/`) has to run *before* value parsing — the
+same letter or 3-digit code means different things on a resistor than a capacitor —
+and required-parameter validation has to run *after* parsing, so splitting them into
+separate pipeline stages would require inventing an intermediate artifact with no
+other consumer. `classify`'s router and criticality modules are called from within
+the `normalize` stage instead. See `docs/decision-log.md` § M2.
 
 ## Sourcing adapters
 

@@ -7,4 +7,18 @@ With that in mind, discuss the implementation steps with me and start create res
 
 - create prompts for each phase that call the appropriate agent. Build a factory process that stops after each Milestone, asks for review, and handsover to the next milestone prompt
 
-- 
+- which agent should I use to implement each phase of the roadmap
+
+- create prompts for each phase that call the appropriate agent. Build a factory process that stops after each Milestone, asks for review, and handsover to the next milestone prompt
+
+- /roadmap-m0-contracts-skeleton
+
+- create an evidence summary of this whole conversation and store it in a md file so it can be used later
+
+- use the decision log
+
+- /roadmap-m1-ingest
+
+- update the agents that make sense to subagents so they can be called inside the prompts
+
+- /roadmap-m2-normalize-classify

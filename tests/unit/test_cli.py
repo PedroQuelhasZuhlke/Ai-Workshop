@@ -17,10 +17,10 @@ def test_run_then_resume_from_unregistered_stage(tmp_path: Path) -> None:
     assert (runs_root / run_id / "meta.json").exists()
 
     resume_result = runner.invoke(
-        main, ["--runs-root", str(runs_root), "resume", run_id, "--from", "normalize"]
+        main, ["--runs-root", str(runs_root), "resume", run_id, "--from", "policy"]
     )
     assert resume_result.exit_code != 0
-    assert "normalize" in resume_result.output
+    assert "policy" in resume_result.output
 
 
 def test_run_then_resume_from_registered_stage(tmp_path: Path) -> None:
@@ -34,7 +34,7 @@ def test_run_then_resume_from_registered_stage(tmp_path: Path) -> None:
     run_id = result.output.strip()
 
     resume_result = runner.invoke(
-        main, ["--runs-root", str(runs_root), "resume", run_id, "--from", "ingest"]
+        main, ["--runs-root", str(runs_root), "resume", run_id, "--from", "normalize"]
     )
     assert resume_result.exit_code == 0, resume_result.output
 

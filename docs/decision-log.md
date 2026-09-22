@@ -152,6 +152,77 @@ adding `xlrd` for a code path nothing tests. `readers.read_grid` raises
   injection path into whoever opens the export. All cells neutralized, including
   system-generated ones sourced from supplier catalogs.
 
+## 7a. M2 — Normalization and classification (2026-09-22)
+
+**Scope implemented:** the value parser (RKM/EIA shorthand, SI-prefix notation,
+capacitor 3-digit pF codes, per-category tolerance-letter tables, asymmetric
+tolerance), package/footprint resolution (IPC land-pattern prefixes, the
+imperial/metric passive collision, semiconductor package families), ratings/
+dielectric/compliance extraction from free text, a category router with
+per-category required-parameter validation, a baseline safety-criticality
+classifier, confidence scoring, and the `normalize_fallback` LLM call site.
+
+**Decision: `normalize` and `classify` are one registered pipeline stage, not two.**
+`architecture.md`'s original stage table listed them separately, with `classify`
+consuming `NormalizedRequirement[]`. In practice, category has to be resolved
+*before* value parsing (a tolerance letter and a 3-digit code mean different things
+on a resistor than a capacitor), and required-parameter validation has to run
+*after* parsing. Splitting them into two pipeline stages would require inventing an
+intermediate artifact with no other consumer just to satisfy the stage boundary.
+Resolution: one stage, `NormalizeStage` (`src/pcbpick/normalize/stage.py`), calls
+into `src/pcbpick/classify/`'s router and criticality modules internally. The
+module-level separation (`normalize/` vs. `classify/`) is preserved; the pipeline-
+stage separation is not. `architecture.md` updated to match.
+
+**Decision: DNP lines are excluded from `NormalizedRequirement[]`, not carried
+through with a `populate` flag.** `NormalizedRequirement` has no `populate` field
+and, per `contracts.instructions.md`, adding one is a contract change that should
+only happen when a value must cross a stage boundary. A line nobody will populate
+has nothing to source — `BomLine.populate=False` lines are counted and reported via
+an `INFO` `dnp_lines_excluded` issue, but the upstream `ingest` artifact (which
+retains every line, including DNP ones, in `raw`) remains the audit anchor for them.
+
+**Decision: capacitor 3-digit-code-plus-tolerance-letter is unambiguous; the same
+shape on a resistor is not.** `225K`/`225Z` on a capacitor resolve deterministically
+(capacitors have no competing RKM use of `K`/`M` as an SI multiplier). `103K` on a
+resistor is a genuine collision between RKM shorthand (`103` × kilo = 103,000 Ω) and
+a chip-resistor code-plus-tolerance-letter marking (10,000 Ω ±10%) — flagged
+unresolved rather than guessed either way. Verified against a hand-built fixture,
+`fixtures/boms/normalize_edge_cases.csv`.
+
+**Decision: only the two genuinely-colliding passive package codes (`0402`,
+`0603`) are treated as system-ambiguous when bare.** Every other imperial code in
+the passive table (`0805`, `1206`, `1210`, `1812`, `2010`, `2512`) has no metric-table
+collision and resolves even without an explicit `Metric`/IPC-prefix marker — treating
+every bare 4-digit code as ambiguous would have over-flagged safe, common cases.
+
+**Decision: `normalize_fallback` is invoked only when the category router found
+nothing to route on at all** (refdes prefix and description both silent), not for
+every partial ambiguity (an ambiguous value on an otherwise-known category, or a
+system-ambiguous footprint, are not sent to the model — they are deterministic
+questions with a deterministic "unresolved" answer). A successful fallback still
+leaves the affected field in `unresolved` and the requirement's confidence low:
+`llm_inferred` values never satisfy a hard check on their own, per
+`llm-calls.instructions.md`. Contract addition: `NormalizedRequirementFragment`
+(the `normalize_fallback` response shape) in `contracts/requirement.py`.
+
+**Contract additions:** `NormalizedRequirementFragment` (new type, additive — no
+migration required). `src/pcbpick/llm/` created: `LLMClient` protocol,
+`call_structured` (bounded-retry structured-output helper), `FakeLLMClient` for
+tests, and the `normalize_fallback` prompt template. No real provider is wired yet
+— the stage's default `llm_client=None` degrades to an `INFO`-severity
+`llm_fallback_unavailable` issue, mirroring the M1 column-mapping LLM-tier
+precedent.
+
+**Fixture:** `fixtures/boms/normalize_edge_cases.csv` + `.expected.json` — 19
+hand-verified rows built by the `fixture-curator` agent specifically to prove every
+genuine ambiguity (bare 3-digit capacitor codes, the capacitor `1M` trap, the
+resistor `103K` code/RKM collision, unrecognized and system-ambiguous footprints,
+conflicting compliance tokens, a fully unclassifiable row) lands in `unresolved`
+with nothing guessed, while paired control rows (RKM placement, micro-sign
+variants, capacitor tolerance-letter table) prove the same code path resolves
+unambiguous input cleanly.
+
 ## 7. Artifacts created
 
 **Always-on context**

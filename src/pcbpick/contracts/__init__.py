@@ -41,7 +41,7 @@ from pcbpick.contracts.plan import (
     UnfilledRequirement,
 )
 from pcbpick.contracts.policy import PolicyResult
-from pcbpick.contracts.requirement import NormalizedRequirement
+from pcbpick.contracts.requirement import NormalizedRequirement, NormalizedRequirementFragment
 from pcbpick.contracts.version import SCHEMA_VERSION
 
 __all__ = [
@@ -53,6 +53,7 @@ __all__ = [
     "IngestResult",
     "MappingProposal",
     "NormalizedRequirement",
+    "NormalizedRequirementFragment",
     "ParameterValue",
     "PartCandidate",
     "SupplierOffer",

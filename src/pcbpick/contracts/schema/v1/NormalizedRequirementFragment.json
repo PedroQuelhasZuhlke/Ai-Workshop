@@ -1,0 +1,333 @@
+{
+  "$defs": {
+    "ComplianceTag": {
+      "enum": [
+        "rohs",
+        "reach",
+        "aec_q100",
+        "aec_q200"
+      ],
+      "title": "ComplianceTag",
+      "type": "string"
+    },
+    "ComponentCategory": {
+      "description": "The category a requirement or candidate belongs to. Drives `categories.py`.",
+      "enum": [
+        "resistor",
+        "capacitor",
+        "inductor",
+        "ferrite_bead",
+        "diode",
+        "led",
+        "transistor",
+        "ic_analog",
+        "ic_digital",
+        "ic_power",
+        "ic_rf",
+        "crystal",
+        "oscillator",
+        "connector",
+        "switch",
+        "relay",
+        "fuse",
+        "transformer",
+        "mechanical",
+        "module",
+        "unknown"
+      ],
+      "title": "ComponentCategory",
+      "type": "string"
+    },
+    "Footprint": {
+      "additionalProperties": false,
+      "description": "Package/land-pattern identity. Substitutions must match every known field exactly.",
+      "properties": {
+        "height_mm": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Height Mm"
+        },
+        "length_mm": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Length Mm"
+        },
+        "mounting": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MountingType"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "package_code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Package Code"
+        },
+        "pin_count": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pin Count"
+        },
+        "pitch_mm": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pitch Mm"
+        },
+        "raw_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Raw Text"
+        },
+        "width_mm": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Width Mm"
+        }
+      },
+      "title": "Footprint",
+      "type": "object"
+    },
+    "MountingType": {
+      "description": "Footprint mounting style \u2014 part of footprint identity, so it is closed here.",
+      "enum": [
+        "smt",
+        "tht"
+      ],
+      "title": "MountingType",
+      "type": "string"
+    },
+    "ParameterValue": {
+      "additionalProperties": false,
+      "description": "A single requirement or candidate parameter \u2014 always a value plus its provenance.",
+      "properties": {
+        "max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max"
+        },
+        "min": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min"
+        },
+        "raw_text": {
+          "title": "Raw Text",
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/ValueSource"
+        },
+        "tolerance_pct": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tolerance Pct"
+        },
+        "unit": {
+          "title": "Unit",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "value",
+        "unit",
+        "raw_text",
+        "source"
+      ],
+      "title": "ParameterValue",
+      "type": "object"
+    },
+    "ValueSource": {
+      "enum": [
+        "parsed",
+        "llm_inferred",
+        "engineer_entered",
+        "datasheet"
+      ],
+      "title": "ValueSource",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "The `normalize_fallback` LLM call site's output \u2014 never a full requirement.\n\nOnly the fields the deterministic parser could not fill. Every `ParameterValue`\nin `parameters` must carry `source=ValueSource.LLM_INFERRED`; the stage that\nconsumes this fragment is responsible for merging it into a `NormalizedRequirement`\nand adding the affected fields to that requirement's `unresolved` list \u2014 a\nfragment is never accepted as a substitute for engineer confirmation.",
+  "properties": {
+    "category": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ComponentCategory"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "compliance_required": {
+      "items": {
+        "$ref": "#/$defs/ComplianceTag"
+      },
+      "title": "Compliance Required",
+      "type": "array"
+    },
+    "footprint": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Footprint"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "notes": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Notes"
+    },
+    "parameters": {
+      "additionalProperties": {
+        "$ref": "#/$defs/ParameterValue"
+      },
+      "title": "Parameters",
+      "type": "object"
+    },
+    "schema_version": {
+      "default": "v1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "category",
+    "parameters",
+    "footprint",
+    "compliance_required",
+    "notes"
+  ],
+  "title": "NormalizedRequirementFragment",
+  "type": "object"
+}
