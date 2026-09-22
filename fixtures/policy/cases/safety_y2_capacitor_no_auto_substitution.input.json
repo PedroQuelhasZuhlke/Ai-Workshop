@@ -1,0 +1,52 @@
+{
+  "case_id": "safety_y2_capacitor_no_auto_substitution",
+  "requirement": {
+    "schema_version": "v1",
+    "requirement_id": "REQ-014",
+    "reference_designators": ["C40"],
+    "quantity_per_board": 1,
+    "category": "capacitor",
+    "parameters": {
+      "capacitance": { "value": "2.2E-9", "unit": "farad", "raw_text": "2n2", "source": "parsed" },
+      "voltage_rating": { "value": "275", "unit": "volt", "raw_text": "275VAC mains", "source": "parsed" },
+      "dielectric": { "value": null, "unit": "class", "raw_text": "Y2 ceramic", "source": "parsed" }
+    },
+    "footprint": {
+      "package_code": "CAPC3216X180N",
+      "mounting": "smt",
+      "pin_count": 2,
+      "length_mm": "3.2",
+      "width_mm": "1.6",
+      "height_mm": "1.8",
+      "raw_text": "1210"
+    },
+    "specified_mpn": { "mpn": "PME271M522MR30", "manufacturer": "KEMET", "source": "parsed" },
+    "criticality": "safety",
+    "compliance_required": ["rohs"],
+    "notes": "EMI Suppression Capacitor, Y2, 275VAC -- mains-connected safety capacitor. Detected via the 'Y2' + 'mains' safety-critical tokens (category-rules.md); agency approvals (VDE/ENEC) are specific to this exact part.",
+    "confidence": { "score": 1.0, "reasons": ["all required parameters parsed from dedicated BOM columns"] },
+    "unresolved": []
+  },
+  "candidate": {
+    "schema_version": "v1",
+    "requirement_id": "REQ-014",
+    "mpn": "B32022A3222M",
+    "manufacturer": "TDK",
+    "parameters": {
+      "capacitance": { "value": "2.2E-9", "unit": "farad", "raw_text": "2n2", "source": "datasheet" },
+      "voltage_rating": { "value": "275", "unit": "volt", "raw_text": "275VAC", "source": "datasheet" },
+      "dielectric": { "value": null, "unit": "class", "raw_text": "Y2 ceramic", "source": "datasheet" }
+    },
+    "footprint": {
+      "package_code": "CAPC3216X180N",
+      "mounting": "smt",
+      "pin_count": 2,
+      "length_mm": "3.2",
+      "width_mm": "1.6",
+      "height_mm": "1.8",
+      "raw_text": "1210"
+    },
+    "lifecycle": "active",
+    "compliance": ["rohs"]
+  }
+}

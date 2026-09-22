@@ -1,0 +1,11 @@
+{
+  "case_id": "known_bad_compliance_rohs_regression",
+  "outcome": "fail",
+  "tier": null,
+  "expected_rules": [
+    { "rule_name": "footprint_identity", "passed": true, "reason_contains": "footprint" },
+    { "rule_name": "compliance_rohs", "passed": false, "reason_contains": "RoHS" }
+  ],
+  "blocking_rule": "compliance_rohs",
+  "hand_verified_reasoning": "Requirement.compliance_required includes 'rohs'. Candidate.compliance is an empty list -- no RoHS status is recorded, i.e. unknown. Per category-rules.md's compliance table, 'compliant -> non-compliant or unknown = fail', and unknown compliance never satisfies a required tag. The candidate is otherwise electrically identical, which is exactly the trap: a policy engine that only checks electricals would wrongly pass this."
+}

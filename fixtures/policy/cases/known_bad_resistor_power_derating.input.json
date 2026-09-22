@@ -1,0 +1,52 @@
+{
+  "case_id": "known_bad_resistor_power_derating",
+  "requirement": {
+    "schema_version": "v1",
+    "requirement_id": "REQ-005",
+    "reference_designators": ["R40"],
+    "quantity_per_board": 1,
+    "category": "resistor",
+    "parameters": {
+      "resistance": { "value": "1000", "unit": "ohm", "raw_text": "1.0k", "source": "parsed" },
+      "tolerance_pct": { "value": "1", "unit": "percent", "raw_text": "1%", "source": "parsed" },
+      "power_rating": { "value": "0.2", "unit": "watt", "raw_text": "0.2W applied dissipation", "source": "parsed" }
+    },
+    "footprint": {
+      "package_code": "RESC3216X70N",
+      "mounting": "smt",
+      "pin_count": 2,
+      "length_mm": "3.2",
+      "width_mm": "1.6",
+      "height_mm": "0.7",
+      "raw_text": "1206"
+    },
+    "specified_mpn": null,
+    "criticality": "standard",
+    "compliance_required": ["rohs"],
+    "notes": "Resistor power derating factor per category-rules.md is <=60% of rated -- candidate must be rated >=0.3333W (0.2W / 0.6), not merely >=0.2W.",
+    "confidence": { "score": 1.0, "reasons": ["all required parameters parsed from dedicated BOM columns"] },
+    "unresolved": []
+  },
+  "candidate": {
+    "schema_version": "v1",
+    "requirement_id": "REQ-005",
+    "mpn": "RC1206FR-071KL",
+    "manufacturer": "Yageo",
+    "parameters": {
+      "resistance": { "value": "1000", "unit": "ohm", "raw_text": "1.0k", "source": "datasheet" },
+      "tolerance_pct": { "value": "1", "unit": "percent", "raw_text": "1%", "source": "datasheet" },
+      "power_rating": { "value": "0.25", "unit": "watt", "raw_text": "0.25W", "source": "datasheet" }
+    },
+    "footprint": {
+      "package_code": "RESC3216X70N",
+      "mounting": "smt",
+      "pin_count": 2,
+      "length_mm": "3.2",
+      "width_mm": "1.6",
+      "height_mm": "0.7",
+      "raw_text": "1206"
+    },
+    "lifecycle": "active",
+    "compliance": ["rohs"]
+  }
+}

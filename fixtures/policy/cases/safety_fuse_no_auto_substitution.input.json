@@ -1,0 +1,51 @@
+{
+  "case_id": "safety_fuse_no_auto_substitution",
+  "requirement": {
+    "schema_version": "v1",
+    "requirement_id": "REQ-013",
+    "reference_designators": ["F1"],
+    "quantity_per_board": 1,
+    "category": "fuse",
+    "parameters": {
+      "current_rating": { "value": "2", "unit": "ampere", "raw_text": "2A", "source": "parsed" },
+      "voltage_rating": { "value": "250", "unit": "volt", "raw_text": "250V", "source": "parsed" }
+    },
+    "footprint": {
+      "package_code": "Fuse_1206",
+      "mounting": "smt",
+      "pin_count": 2,
+      "length_mm": "3.2",
+      "width_mm": "1.6",
+      "height_mm": "1.1",
+      "raw_text": "1206"
+    },
+    "specified_mpn": { "mpn": "0217002.MXP", "manufacturer": "Littelfuse", "source": "parsed" },
+    "criticality": "safety",
+    "compliance_required": ["rohs"],
+    "notes": "Mains-adjacent fast-blow fuse. Category-driven safety classification (fuses are safety-critical per the M2 criticality floor and the skill's safety-critical detection list) -- restricted to tier 0, exact MPN only.",
+    "confidence": { "score": 1.0, "reasons": ["all required parameters parsed from dedicated BOM columns"] },
+    "unresolved": []
+  },
+  "candidate": {
+    "schema_version": "v1",
+    "requirement_id": "REQ-013",
+    "mpn": "S506-2A-R",
+    "manufacturer": "Bel Fuse",
+    "parameters": {
+      "current_rating": { "value": "2", "unit": "ampere", "raw_text": "2A", "source": "datasheet" },
+      "voltage_rating": { "value": "250", "unit": "volt", "raw_text": "250V", "source": "datasheet" },
+      "breaking_capacity": { "value": "100", "unit": "ampere", "raw_text": "100A breaking capacity", "source": "datasheet" }
+    },
+    "footprint": {
+      "package_code": "Fuse_1206",
+      "mounting": "smt",
+      "pin_count": 2,
+      "length_mm": "3.2",
+      "width_mm": "1.6",
+      "height_mm": "1.1",
+      "raw_text": "1206"
+    },
+    "lifecycle": "active",
+    "compliance": ["rohs"]
+  }
+}

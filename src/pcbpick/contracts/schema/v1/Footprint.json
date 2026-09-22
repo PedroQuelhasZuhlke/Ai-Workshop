@@ -109,6 +109,18 @@
       "default": null,
       "title": "Raw Text"
     },
+    "thermal_pad": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Thermal Pad"
+    },
     "width_mm": {
       "anyOf": [
         {

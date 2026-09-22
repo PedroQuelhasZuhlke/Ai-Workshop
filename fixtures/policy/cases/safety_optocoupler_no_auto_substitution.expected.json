@@ -1,0 +1,11 @@
+{
+  "case_id": "safety_optocoupler_no_auto_substitution",
+  "outcome": "fail",
+  "tier": null,
+  "expected_rules": [
+    { "rule_name": "criticality_gate", "passed": true, "reason_contains": "safety" },
+    { "rule_name": "safety_critical_exact_mpn_only", "passed": false, "reason_contains": "PC817X2NSZ1B" }
+  ],
+  "blocking_rule": "safety_critical_exact_mpn_only",
+  "hand_verified_reasoning": "Optocouplers and digital isolators are explicitly on the safety-critical list. The candidate is a well-known pin-compatible optocoupler with matching supply voltage, pin count and footprint, but is a different MPN/manufacturer than specified. Reinforced-insulation ratings are certified per manufactured part; pin compatibility says nothing about the isolation barrier's actual certification, so this must be blocked from auto-substitution regardless of how close the datasheets look."
+}

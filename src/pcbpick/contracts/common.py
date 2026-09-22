@@ -50,6 +50,7 @@ class Footprint(BaseModel):
     length_mm: Decimal | None = None
     width_mm: Decimal | None = None
     height_mm: Decimal | None = None
+    thermal_pad: bool | None = None
     raw_text: str | None = None
 
 

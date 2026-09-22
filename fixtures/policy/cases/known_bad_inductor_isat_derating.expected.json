@@ -1,0 +1,11 @@
+{
+  "case_id": "known_bad_inductor_isat_derating",
+  "outcome": "fail",
+  "tier": null,
+  "expected_rules": [
+    { "rule_name": "footprint_identity", "passed": true, "reason_contains": "footprint" },
+    { "rule_name": "saturation_current_derating", "passed": false, "reason_contains": "3" }
+  ],
+  "blocking_rule": "saturation_current_derating",
+  "hand_verified_reasoning": "Inductor saturation current derating requires Isat >= 1.5 x peak current (category-rules.md). Requirement peak current 2A -> derated minimum Isat = 2 x 1.5 = 3A. Candidate Isat is 2.5A, which clears the bare 2A nameplate figure but is below the 3A derated requirement, so it must fail."
+}

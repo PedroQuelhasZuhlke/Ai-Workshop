@@ -1,0 +1,14 @@
+{
+  "case_id": "known_good_tier2_pin_compatible_ic",
+  "outcome": "pass",
+  "tier": 2,
+  "expected_rules": [
+    { "rule_name": "footprint_identity", "passed": true, "reason_contains": "footprint" },
+    { "rule_name": "category_match", "passed": true, "reason_contains": "ic_analog" },
+    { "rule_name": "parametric_comparison", "passed": true, "reason_contains": "supply_voltage" },
+    { "rule_name": "tier_cap_ic_cross_manufacturer", "passed": true, "reason_contains": "different manufacturer" },
+    { "rule_name": "lifecycle", "passed": true, "reason_contains": "active" }
+  ],
+  "blocking_rule": null,
+  "hand_verified_reasoning": "Per category-rules.md, ICs default to exact-MPN tier 0 only, unless the engineer explicitly opens it up -- here specified_mpn is null, signalling the requirement is parametric only. The candidate is a pin-compatible op-amp (same 8-pin SOIC footprint, supply range 2.7-6V covers the required 2.7-5.5V) from a different manufacturer. 'Pin-compatible parts from different manufacturers are tier 2 at best' because electrical characteristics, internal protection, and errata differ across manufacturers even when headline parameters match -- so this passes, but is capped at tier 2 and requires engineer review before it can enter a plan."
+}

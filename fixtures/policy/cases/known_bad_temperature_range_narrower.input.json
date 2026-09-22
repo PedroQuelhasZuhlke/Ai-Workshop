@@ -1,0 +1,56 @@
+{
+  "case_id": "known_bad_temperature_range_narrower",
+  "requirement": {
+    "schema_version": "v1",
+    "requirement_id": "REQ-007",
+    "reference_designators": ["Q5"],
+    "quantity_per_board": 1,
+    "category": "transistor",
+    "parameters": {
+      "voltage_rating": { "value": "20", "unit": "volt", "raw_text": "Vds 20V applied", "source": "parsed" },
+      "current_rating": { "value": "1", "unit": "ampere", "raw_text": "Id 1A applied", "source": "parsed" },
+      "operating_temp_min": { "value": "-40", "unit": "celsius", "raw_text": "-40C", "source": "parsed" },
+      "operating_temp_max": { "value": "85", "unit": "celsius", "raw_text": "85C ambient max", "source": "parsed" }
+    },
+    "footprint": {
+      "package_code": "SOT-23",
+      "mounting": "smt",
+      "pin_count": 3,
+      "pitch_mm": "0.95",
+      "length_mm": "2.9",
+      "width_mm": "1.3",
+      "height_mm": "1.1",
+      "raw_text": "SOT-23"
+    },
+    "specified_mpn": null,
+    "criticality": "standard",
+    "compliance_required": ["rohs"],
+    "notes": "Extended-range automotive-adjacent design: board must operate down to -40C. operating_temp_min/max are supplemental policy parameters beyond categories.py's normalization-required set (voltage_rating, current_rating) -- the policy engine is expected to compare them as a hard range, not merely a derating margin.",
+    "confidence": { "score": 1.0, "reasons": ["all required parameters parsed from dedicated BOM columns"] },
+    "unresolved": []
+  },
+  "candidate": {
+    "schema_version": "v1",
+    "requirement_id": "REQ-007",
+    "mpn": "2N7002K-STD",
+    "manufacturer": "Generic Semi",
+    "parameters": {
+      "voltage_rating": { "value": "60", "unit": "volt", "raw_text": "60V", "source": "datasheet" },
+      "current_rating": { "value": "1.5", "unit": "ampere", "raw_text": "1.5A", "source": "datasheet" },
+      "operating_temp_min": { "value": "-20", "unit": "celsius", "raw_text": "-20C", "source": "datasheet" },
+      "operating_temp_max": { "value": "105", "unit": "celsius", "raw_text": "105C", "source": "datasheet" }
+    },
+    "footprint": {
+      "package_code": "SOT-23",
+      "mounting": "smt",
+      "pin_count": 3,
+      "pitch_mm": "0.95",
+      "length_mm": "2.9",
+      "width_mm": "1.3",
+      "height_mm": "1.1",
+      "raw_text": "SOT-23"
+    },
+    "lifecycle": "active",
+    "compliance": ["rohs"]
+  }
+}

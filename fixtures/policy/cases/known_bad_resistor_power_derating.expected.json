@@ -1,0 +1,11 @@
+{
+  "case_id": "known_bad_resistor_power_derating",
+  "outcome": "fail",
+  "tier": null,
+  "expected_rules": [
+    { "rule_name": "footprint_identity", "passed": true, "reason_contains": "footprint" },
+    { "rule_name": "power_derating", "passed": false, "reason_contains": "0.333" }
+  ],
+  "blocking_rule": "power_derating",
+  "hand_verified_reasoning": "Resistor power derating factor is <=60% of rated (category-rules.md). Requirement applied power 0.2W -> derated minimum rated power = 0.2 / 0.6 = 0.3333...W. Candidate is rated 0.25W, a standard catalog value that clears the 0.2W nameplate figure but is below the 0.3333W derated requirement, so it must fail."
+}

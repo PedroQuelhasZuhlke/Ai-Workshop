@@ -1,0 +1,12 @@
+{
+  "case_id": "known_bad_missing_voltage_rating_unknown",
+  "outcome": "fail",
+  "tier": null,
+  "expected_rules": [
+    { "rule_name": "footprint_identity", "passed": true, "reason_contains": "footprint" },
+    { "rule_name": "dielectric_class", "passed": true, "reason_contains": "X7R" },
+    { "rule_name": "required_parameter_unknown", "passed": false, "reason_contains": "voltage_rating" }
+  ],
+  "blocking_rule": "required_parameter_unknown",
+  "hand_verified_reasoning": "Capacitance, tolerance, dielectric and footprint all match. The candidate's voltage_rating ParameterValue has value=null (unknown/not stated by the supplier) where the derated requirement needs >=20V (10V applied / 0.5 Class II factor). Per category-rules.md hard gate #6, 'a candidate whose rated voltage is unknown cannot pass a voltage check -- missing data fails closed.' A policy engine that skips the check when data is absent (treating None as a pass) would get this case wrong; the correct behaviour is an explicit failure, not silent omission."
+}

@@ -1,0 +1,12 @@
+{
+  "case_id": "known_good_tier0_identical_mpn",
+  "outcome": "pass",
+  "tier": 0,
+  "expected_rules": [
+    { "rule_name": "mpn_identity", "passed": true, "reason_contains": "matches specified MPN" },
+    { "rule_name": "footprint_identity", "passed": true, "reason_contains": "footprint" },
+    { "rule_name": "lifecycle", "passed": true, "reason_contains": "active" }
+  ],
+  "blocking_rule": null,
+  "hand_verified_reasoning": "Candidate MPN 'RC0603FR-0710KL' from Yageo is byte-identical to requirement.specified_mpn (same MPN, same manufacturer) -- this is a re-offer of the exact same part by a second distributor. Tier 0 requires nothing beyond MPN identity; no parametric comparison is needed to reach the correct answer here."
+}

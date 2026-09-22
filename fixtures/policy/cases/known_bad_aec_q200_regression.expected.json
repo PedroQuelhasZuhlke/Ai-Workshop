@@ -1,0 +1,14 @@
+{
+  "case_id": "known_bad_aec_q200_regression",
+  "outcome": "fail",
+  "tier": null,
+  "expected_rules": [
+    { "rule_name": "footprint_identity", "passed": true, "reason_contains": "footprint" },
+    { "rule_name": "voltage_derating", "passed": false, "reason_contains": "24" },
+    { "rule_name": "dielectric_class", "passed": true, "reason_contains": "X7R" },
+    { "rule_name": "compliance_rohs", "passed": true, "reason_contains": "RoHS" },
+    { "rule_name": "qualification_aec_q200", "passed": false, "reason_contains": "AEC-Q200" }
+  ],
+  "blocking_rule": "qualification_aec_q200",
+  "hand_verified_reasoning": "Requirement.compliance_required includes 'aec_q200'. Candidate.compliance is ['rohs'] only -- no AEC-Q200 qualification recorded, which alone fails this case. X7R is a Class II dielectric, so voltage derating also independently fails: 12V applied / 50% Class II factor = 24V minimum requirement; candidate rated 16V does not clear it (matches the identical voltage pair in known_bad_class_ii_voltage_derating). Dielectric class and RoHS both match. Per category-rules.md: 'AEC-Q100/AEC-Q200: required -> not qualified = fail' -- qualification may never be lost even when every electrical parameter is fine, so qualification_aec_q200 remains the pinned blocking_rule even though voltage_derating fails too."
+}

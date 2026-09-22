@@ -1,0 +1,11 @@
+{
+  "case_id": "safety_y2_capacitor_no_auto_substitution",
+  "outcome": "fail",
+  "tier": null,
+  "expected_rules": [
+    { "rule_name": "criticality_gate", "passed": true, "reason_contains": "safety" },
+    { "rule_name": "safety_critical_exact_mpn_only", "passed": false, "reason_contains": "PME271M522MR30" }
+  ],
+  "blocking_rule": "safety_critical_exact_mpn_only",
+  "hand_verified_reasoning": "Y2-class mains-connected safety capacitors are on the safety-critical detection list by both category (X/Y-class safety capacitors) and description token ('Y2', 'mains'). Candidate is electrically and dimensionally identical (same capacitance, voltage, dielectric class, footprint) but is a different MPN from a different manufacturer. Agency safety approvals (VDE, ENEC) attach to the specific manufactured part, not to the electrical spec, so an electrically-identical part without the same approval fails the compliance obligation and is blocked from auto-substitution even though it would otherwise look like tier 1."
+}

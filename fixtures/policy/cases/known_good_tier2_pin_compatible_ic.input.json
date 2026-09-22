@@ -1,0 +1,52 @@
+{
+  "case_id": "known_good_tier2_pin_compatible_ic",
+  "requirement": {
+    "schema_version": "v1",
+    "requirement_id": "REQ-003",
+    "reference_designators": ["U7"],
+    "quantity_per_board": 1,
+    "category": "ic_analog",
+    "parameters": {
+      "supply_voltage": { "value": "5", "unit": "volt", "raw_text": "single supply, up to 5.5V", "min": "2.7", "max": "5.5", "source": "parsed" },
+      "package_pin_count": { "value": "8", "unit": "count", "raw_text": "8-pin SOIC", "source": "parsed" }
+    },
+    "footprint": {
+      "package_code": "SOIC127P600X175-8N",
+      "mounting": "smt",
+      "pin_count": 8,
+      "pitch_mm": "1.27",
+      "length_mm": "4.9",
+      "width_mm": "3.9",
+      "height_mm": "1.75",
+      "raw_text": "SOIC-8"
+    },
+    "specified_mpn": null,
+    "criticality": "standard",
+    "compliance_required": ["rohs"],
+    "notes": "Generic single op-amp, general-purpose signal conditioning -- engineer opened this to parametric equivalents (no specified_mpn), so cross-manufacturer pin-compatible parts may be proposed at tier 2 for review.",
+    "confidence": { "score": 0.9, "reasons": ["supply voltage and pin count parsed from datasheet-style description"] },
+    "unresolved": []
+  },
+  "candidate": {
+    "schema_version": "v1",
+    "requirement_id": "REQ-003",
+    "mpn": "TS912AIDT",
+    "manufacturer": "STMicroelectronics",
+    "parameters": {
+      "supply_voltage": { "value": "6", "unit": "volt", "raw_text": "2.7V to 6V", "min": "2.7", "max": "6", "source": "datasheet" },
+      "package_pin_count": { "value": "8", "unit": "count", "raw_text": "8-pin SOIC", "source": "datasheet" }
+    },
+    "footprint": {
+      "package_code": "SOIC127P600X175-8N",
+      "mounting": "smt",
+      "pin_count": 8,
+      "pitch_mm": "1.27",
+      "length_mm": "4.9",
+      "width_mm": "3.9",
+      "height_mm": "1.75",
+      "raw_text": "SOIC-8"
+    },
+    "lifecycle": "active",
+    "compliance": ["rohs"]
+  }
+}

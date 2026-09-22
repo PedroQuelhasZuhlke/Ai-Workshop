@@ -1,0 +1,11 @@
+{
+  "case_id": "known_bad_lifecycle_obsolete",
+  "outcome": "fail",
+  "tier": null,
+  "expected_rules": [
+    { "rule_name": "footprint_identity", "passed": true, "reason_contains": "footprint" },
+    { "rule_name": "lifecycle", "passed": false, "reason_contains": "obsolete" }
+  ],
+  "blocking_rule": "lifecycle",
+  "hand_verified_reasoning": "Resistance, tolerance and footprint all match exactly -- absent the lifecycle problem this candidate would be a clean tier-1 drop-in. Per the skill's lifecycle table, 'obsolete' always fails, unconditionally (unlike 'eol', which can pass with a warning if stock covers the build). The engine must reject regardless of how good the electrical fit is."
+}

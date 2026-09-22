@@ -1,0 +1,11 @@
+{
+  "case_id": "engineer_override_do_not_substitute",
+  "outcome": "fail",
+  "tier": null,
+  "expected_rules": [
+    { "rule_name": "criticality_gate", "passed": true, "reason_contains": "do_not_substitute" },
+    { "rule_name": "engineer_do_not_substitute", "passed": false, "reason_contains": "WSL2512R0100FEA" }
+  ],
+  "blocking_rule": "engineer_do_not_substitute",
+  "hand_verified_reasoning": "requirement.criticality is 'do_not_substitute', set directly by the engineer (source=engineer_entered) -- category-rules.md states an explicit engineer marking 'always wins over automatic classification' and automatic classification 'can never downgrade a part the engineer marked'. The candidate is a same-footprint, same-value, tighter-tolerance (0.5% vs 1%) 4-terminal Kelvin shunt from a different manufacturer that would otherwise be an obvious tier-1 pass -- the correct engine must still reject it, because only the exact specified MPN ('WSL2512R0100FEA') is permitted once do_not_substitute is set, regardless of electrical quality."
+}

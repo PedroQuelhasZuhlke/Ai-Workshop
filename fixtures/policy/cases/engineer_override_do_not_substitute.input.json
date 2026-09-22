@@ -1,0 +1,52 @@
+{
+  "case_id": "engineer_override_do_not_substitute",
+  "requirement": {
+    "schema_version": "v1",
+    "requirement_id": "REQ-017",
+    "reference_designators": ["R100"],
+    "quantity_per_board": 1,
+    "category": "resistor",
+    "parameters": {
+      "resistance": { "value": "0.01", "unit": "ohm", "raw_text": "10mOhm", "source": "parsed" },
+      "tolerance_pct": { "value": "1", "unit": "percent", "raw_text": "1%", "source": "parsed" },
+      "power_rating": { "value": "1", "unit": "watt", "raw_text": "1W", "source": "parsed" }
+    },
+    "footprint": {
+      "package_code": "RESC6432X70N",
+      "mounting": "smt",
+      "pin_count": 4,
+      "length_mm": "6.4",
+      "width_mm": "3.2",
+      "height_mm": "0.7",
+      "raw_text": "2512, 4-terminal Kelvin"
+    },
+    "specified_mpn": { "mpn": "WSL2512R0100FEA", "manufacturer": "Vishay", "source": "engineer_entered" },
+    "criticality": "do_not_substitute",
+    "compliance_required": ["rohs"],
+    "notes": "Precision current-sense shunt used for the calibrated overcurrent trip point -- engineer explicitly marked do_not_substitute for measurement traceability. Nothing about 'resistor' as a category or this description would auto-flag safety-critical status; this is a pure engineer override that must outrank automatic classification.",
+    "confidence": { "score": 1.0, "reasons": ["engineer-entered criticality override recorded directly on the requirement"] },
+    "unresolved": []
+  },
+  "candidate": {
+    "schema_version": "v1",
+    "requirement_id": "REQ-017",
+    "mpn": "PCS2512R0100FKEG",
+    "manufacturer": "Stackpole",
+    "parameters": {
+      "resistance": { "value": "0.01", "unit": "ohm", "raw_text": "10mOhm", "source": "datasheet" },
+      "tolerance_pct": { "value": "0.5", "unit": "percent", "raw_text": "0.5%", "source": "datasheet" },
+      "power_rating": { "value": "1", "unit": "watt", "raw_text": "1W", "source": "datasheet" }
+    },
+    "footprint": {
+      "package_code": "RESC6432X70N",
+      "mounting": "smt",
+      "pin_count": 4,
+      "length_mm": "6.4",
+      "width_mm": "3.2",
+      "height_mm": "0.7",
+      "raw_text": "2512, 4-terminal Kelvin"
+    },
+    "lifecycle": "active",
+    "compliance": ["rohs"]
+  }
+}

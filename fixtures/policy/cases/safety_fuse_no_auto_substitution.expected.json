@@ -1,0 +1,11 @@
+{
+  "case_id": "safety_fuse_no_auto_substitution",
+  "outcome": "fail",
+  "tier": null,
+  "expected_rules": [
+    { "rule_name": "criticality_gate", "passed": true, "reason_contains": "safety" },
+    { "rule_name": "safety_critical_exact_mpn_only", "passed": false, "reason_contains": "0217002.MXP" }
+  ],
+  "blocking_rule": "safety_critical_exact_mpn_only",
+  "hand_verified_reasoning": "Fuses are on the safety-critical category list (agency approvals such as UL/VDE are granted to a specific part from a specific manufacturer, not to a current/voltage rating pair). Candidate current rating (2A), voltage rating (250V), and breaking capacity are electrically at least as good as required, and the footprint matches -- but the candidate MPN ('S506-2A-R', Bel Fuse) is not the exact specified_mpn ('0217002.MXP', Littelfuse). Per evaluation order step 3, the criticality gate runs before any parametric comparison and restricts safety-critical requirements to tier 0 (exact MPN) only, so this candidate is blocked regardless of how electrically superior it is."
+}

@@ -1,0 +1,50 @@
+{
+  "case_id": "known_good_tier0_identical_mpn",
+  "requirement": {
+    "schema_version": "v1",
+    "requirement_id": "REQ-001",
+    "reference_designators": ["R12"],
+    "quantity_per_board": 2,
+    "category": "resistor",
+    "parameters": {
+      "resistance": { "value": "10000", "unit": "ohm", "raw_text": "10.0k", "source": "parsed" },
+      "tolerance_pct": { "value": "1", "unit": "percent", "raw_text": "1%", "source": "parsed" }
+    },
+    "footprint": {
+      "package_code": "RESC1608X55N",
+      "mounting": "smt",
+      "pin_count": 2,
+      "length_mm": "1.6",
+      "width_mm": "0.8",
+      "height_mm": "0.55",
+      "raw_text": "0603"
+    },
+    "specified_mpn": { "mpn": "RC0603FR-0710KL", "manufacturer": "Yageo", "source": "parsed" },
+    "criticality": "standard",
+    "compliance_required": ["rohs"],
+    "notes": null,
+    "confidence": { "score": 1.0, "reasons": ["all required parameters parsed from dedicated BOM columns"] },
+    "unresolved": []
+  },
+  "candidate": {
+    "schema_version": "v1",
+    "requirement_id": "REQ-001",
+    "mpn": "RC0603FR-0710KL",
+    "manufacturer": "Yageo",
+    "parameters": {
+      "resistance": { "value": "10000", "unit": "ohm", "raw_text": "10.0k", "source": "datasheet" },
+      "tolerance_pct": { "value": "1", "unit": "percent", "raw_text": "1%", "source": "datasheet" }
+    },
+    "footprint": {
+      "package_code": "RESC1608X55N",
+      "mounting": "smt",
+      "pin_count": 2,
+      "length_mm": "1.6",
+      "width_mm": "0.8",
+      "height_mm": "0.55",
+      "raw_text": "0603"
+    },
+    "lifecycle": "active",
+    "compliance": ["rohs"]
+  }
+}

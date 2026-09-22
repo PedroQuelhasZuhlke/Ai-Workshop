@@ -1,0 +1,12 @@
+{
+  "case_id": "known_bad_dielectric_class_change",
+  "outcome": "fail",
+  "tier": null,
+  "expected_rules": [
+    { "rule_name": "footprint_identity", "passed": true, "reason_contains": "footprint" },
+    { "rule_name": "voltage_derating", "passed": true, "reason_contains": "20" },
+    { "rule_name": "dielectric_class", "passed": false, "reason_contains": "Class I" }
+  ],
+  "blocking_rule": "dielectric_class",
+  "hand_verified_reasoning": "Requirement dielectric is C0G (Class I); candidate is X7R (Class II). Class I <-> Class II is a hard fail regardless of electrical margin (category-rules.md, part-normalization dielectric reference) -- the candidate's much higher 50V rating (>> the 20V Class-I-derated requirement of 16V/0.8=20V) does not rescue it, because Class II capacitance drifts with applied DC bias and temperature in ways Class I does not."
+}

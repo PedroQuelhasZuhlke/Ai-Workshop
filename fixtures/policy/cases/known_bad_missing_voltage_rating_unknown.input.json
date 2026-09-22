@@ -1,0 +1,54 @@
+{
+  "case_id": "known_bad_missing_voltage_rating_unknown",
+  "requirement": {
+    "schema_version": "v1",
+    "requirement_id": "REQ-018",
+    "reference_designators": ["C60"],
+    "quantity_per_board": 1,
+    "category": "capacitor",
+    "parameters": {
+      "capacitance": { "value": "1E-6", "unit": "farad", "raw_text": "1uF", "source": "parsed" },
+      "tolerance_pct": { "value": "10", "unit": "percent", "raw_text": "±10%", "source": "parsed" },
+      "voltage_rating": { "value": "10", "unit": "volt", "raw_text": "10V applied", "source": "parsed" },
+      "dielectric": { "value": null, "unit": "class", "raw_text": "X7R", "source": "parsed" }
+    },
+    "footprint": {
+      "package_code": "CAPC1608X90N",
+      "mounting": "smt",
+      "pin_count": 2,
+      "length_mm": "1.6",
+      "width_mm": "0.8",
+      "height_mm": "0.9",
+      "raw_text": "0603"
+    },
+    "specified_mpn": null,
+    "criticality": "standard",
+    "compliance_required": ["rohs"],
+    "notes": "Class II (X7R) derating requires a rated voltage >=20V (10V applied / 0.5). The candidate's supplier record has no voltage rating field populated at all -- this must fail closed, not be silently treated as 'presumably fine'.",
+    "confidence": { "score": 1.0, "reasons": ["all required parameters parsed from dedicated BOM columns"] },
+    "unresolved": []
+  },
+  "candidate": {
+    "schema_version": "v1",
+    "requirement_id": "REQ-018",
+    "mpn": "UNKNOWN-VRATING-CAP-104",
+    "manufacturer": "Generic Cap Co",
+    "parameters": {
+      "capacitance": { "value": "1E-6", "unit": "farad", "raw_text": "1uF", "source": "datasheet" },
+      "tolerance_pct": { "value": "10", "unit": "percent", "raw_text": "±10%", "source": "datasheet" },
+      "voltage_rating": { "value": null, "unit": "volt", "raw_text": "voltage rating not stated in supplier record", "source": "datasheet" },
+      "dielectric": { "value": null, "unit": "class", "raw_text": "X7R", "source": "datasheet" }
+    },
+    "footprint": {
+      "package_code": "CAPC1608X90N",
+      "mounting": "smt",
+      "pin_count": 2,
+      "length_mm": "1.6",
+      "width_mm": "0.8",
+      "height_mm": "0.9",
+      "raw_text": "0603"
+    },
+    "lifecycle": "active",
+    "compliance": ["rohs"]
+  }
+}

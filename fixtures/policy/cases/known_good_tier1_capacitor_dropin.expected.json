@@ -1,0 +1,14 @@
+{
+  "case_id": "known_good_tier1_capacitor_dropin",
+  "outcome": "pass",
+  "tier": 1,
+  "expected_rules": [
+    { "rule_name": "footprint_identity", "passed": true, "reason_contains": "footprint" },
+    { "rule_name": "dielectric_class", "passed": true, "reason_contains": "C0G" },
+    { "rule_name": "voltage_derating", "passed": true, "reason_contains": "25" },
+    { "rule_name": "tolerance_direction", "passed": true, "reason_contains": "tighter" },
+    { "rule_name": "lifecycle", "passed": true, "reason_contains": "active" }
+  ],
+  "blocking_rule": null,
+  "hand_verified_reasoning": "Class I (C0G) derating factor is <=80% of rated (category-rules.md). Requirement applied voltage 20V -> derated minimum rated voltage = 20 / 0.8 = 25V. Candidate is rated 50V, which clears 25V. Tolerance moves in the safe direction (5% is tighter than the required 10%). Same dielectric class, same footprint, different manufacturer/MPN, active lifecycle -> this is exactly the tier-1 'drop-in equivalent' definition: same footprint, all parameters meet or exceed, same dielectric class, same-or-better lifecycle. Not tier 0 because the MPN differs from any specified_mpn (there is none here -- the requirement is generic)."
+}

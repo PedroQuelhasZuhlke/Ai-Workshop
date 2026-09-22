@@ -1,0 +1,52 @@
+{
+  "case_id": "safety_isolation_transformer_no_auto_substitution",
+  "requirement": {
+    "schema_version": "v1",
+    "requirement_id": "REQ-016",
+    "reference_designators": ["T1"],
+    "quantity_per_board": 1,
+    "category": "transformer",
+    "parameters": {
+      "turns_ratio": { "value": "1", "unit": "ratio", "raw_text": "1:1", "source": "parsed" },
+      "isolation_voltage": { "value": "4000", "unit": "volt", "raw_text": "4000Vrms reinforced insulation", "source": "parsed" }
+    },
+    "footprint": {
+      "package_code": "THT-TRANSFORMER-16P",
+      "mounting": "tht",
+      "pin_count": 16,
+      "pitch_mm": "2.54",
+      "length_mm": "25.0",
+      "width_mm": "20.0",
+      "height_mm": "18.0",
+      "raw_text": "16-pin THT power module"
+    },
+    "specified_mpn": { "mpn": "750370013", "manufacturer": "Wurth Elektronik", "source": "parsed" },
+    "criticality": "safety",
+    "compliance_required": ["rohs"],
+    "notes": "Mains isolation transformer providing reinforced insulation, VDE/UL agency-approved. Detected via the 'reinforced insulation'/'mains' safety-critical tokens.",
+    "confidence": { "score": 1.0, "reasons": ["all required parameters parsed from dedicated BOM columns"] },
+    "unresolved": []
+  },
+  "candidate": {
+    "schema_version": "v1",
+    "requirement_id": "REQ-016",
+    "mpn": "PH9179.001NLT",
+    "manufacturer": "Pulse Electronics",
+    "parameters": {
+      "turns_ratio": { "value": "1", "unit": "ratio", "raw_text": "1:1", "source": "datasheet" },
+      "isolation_voltage": { "value": "4000", "unit": "volt", "raw_text": "4000Vrms", "source": "datasheet" }
+    },
+    "footprint": {
+      "package_code": "THT-TRANSFORMER-16P",
+      "mounting": "tht",
+      "pin_count": 16,
+      "pitch_mm": "2.54",
+      "length_mm": "25.0",
+      "width_mm": "20.0",
+      "height_mm": "18.0",
+      "raw_text": "16-pin THT power module"
+    },
+    "lifecycle": "active",
+    "compliance": ["rohs"]
+  }
+}

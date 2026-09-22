@@ -1,0 +1,25 @@
+{
+  "schema_note": "Machine-readable index of fixtures/policy/cases/. See README.md for the full field-by-field schema and derivations.",
+  "case_dir": "cases",
+  "pair_suffixes": { "input": ".input.json", "expected": ".expected.json" },
+  "cases": [
+    { "case_id": "known_good_tier0_identical_mpn", "outcome": "pass", "tier": 0, "blocking_rule": null },
+    { "case_id": "known_good_tier1_capacitor_dropin", "outcome": "pass", "tier": 1, "blocking_rule": null },
+    { "case_id": "known_good_tier2_pin_compatible_ic", "outcome": "pass", "tier": 2, "blocking_rule": null },
+    { "case_id": "known_bad_class_ii_voltage_derating", "outcome": "fail", "tier": null, "blocking_rule": "voltage_derating" },
+    { "case_id": "known_bad_resistor_power_derating", "outcome": "fail", "tier": null, "blocking_rule": "power_derating" },
+    { "case_id": "known_bad_inductor_isat_derating", "outcome": "fail", "tier": null, "blocking_rule": "saturation_current_derating" },
+    { "case_id": "known_bad_temperature_range_narrower", "outcome": "fail", "tier": null, "blocking_rule": "temperature_range" },
+    { "case_id": "known_bad_dielectric_class_change", "outcome": "fail", "tier": null, "blocking_rule": "dielectric_class" },
+    { "case_id": "known_bad_footprint_mismatch", "outcome": "fail", "tier": null, "blocking_rule": "footprint_identity" },
+    { "case_id": "known_bad_lifecycle_obsolete", "outcome": "fail", "tier": null, "blocking_rule": "lifecycle" },
+    { "case_id": "known_bad_compliance_rohs_regression", "outcome": "fail", "tier": null, "blocking_rule": "compliance_rohs" },
+    { "case_id": "known_bad_aec_q200_regression", "outcome": "fail", "tier": null, "blocking_rule": "qualification_aec_q200" },
+    { "case_id": "safety_fuse_no_auto_substitution", "outcome": "fail", "tier": null, "blocking_rule": "safety_critical_exact_mpn_only" },
+    { "case_id": "safety_y2_capacitor_no_auto_substitution", "outcome": "fail", "tier": null, "blocking_rule": "safety_critical_exact_mpn_only" },
+    { "case_id": "safety_optocoupler_no_auto_substitution", "outcome": "fail", "tier": null, "blocking_rule": "safety_critical_exact_mpn_only" },
+    { "case_id": "safety_isolation_transformer_no_auto_substitution", "outcome": "fail", "tier": null, "blocking_rule": "safety_critical_exact_mpn_only" },
+    { "case_id": "engineer_override_do_not_substitute", "outcome": "fail", "tier": null, "blocking_rule": "engineer_do_not_substitute" },
+    { "case_id": "known_bad_missing_voltage_rating_unknown", "outcome": "fail", "tier": null, "blocking_rule": "required_parameter_unknown" }
+  ]
+}

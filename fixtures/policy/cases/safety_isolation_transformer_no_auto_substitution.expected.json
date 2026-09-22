@@ -1,0 +1,11 @@
+{
+  "case_id": "safety_isolation_transformer_no_auto_substitution",
+  "outcome": "fail",
+  "tier": null,
+  "expected_rules": [
+    { "rule_name": "criticality_gate", "passed": true, "reason_contains": "safety" },
+    { "rule_name": "safety_critical_exact_mpn_only", "passed": false, "reason_contains": "750370013" }
+  ],
+  "blocking_rule": "safety_critical_exact_mpn_only",
+  "hand_verified_reasoning": "Isolation transformers with reinforced insulation ratings are on the safety-critical list (creepage/clearance-dependent, agency-approved parts). The candidate matches turns ratio, isolation voltage rating and footprint, but carries a different MPN/manufacturer. Creepage, clearance and reinforced-insulation certification are properties of the specific manufactured part and construction, not just the stated isolation voltage number, so cross-manufacturer substitution must be blocked even when the datasheet numbers line up."
+}

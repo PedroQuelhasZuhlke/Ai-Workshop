@@ -1,0 +1,52 @@
+{
+  "case_id": "known_bad_inductor_isat_derating",
+  "requirement": {
+    "schema_version": "v1",
+    "requirement_id": "REQ-006",
+    "reference_designators": ["L3"],
+    "quantity_per_board": 1,
+    "category": "inductor",
+    "parameters": {
+      "inductance": { "value": "1E-5", "unit": "henry", "tolerance_pct": null, "raw_text": "10uH", "source": "parsed" },
+      "tolerance_pct": { "value": "20", "unit": "percent", "raw_text": "±20%", "source": "parsed" },
+      "saturation_current": { "value": "2", "unit": "ampere", "raw_text": "2A peak applied", "source": "parsed" }
+    },
+    "footprint": {
+      "package_code": "INDC3225X180N",
+      "mounting": "smt",
+      "pin_count": 2,
+      "length_mm": "3.2",
+      "width_mm": "2.5",
+      "height_mm": "1.8",
+      "raw_text": "1210"
+    },
+    "specified_mpn": null,
+    "criticality": "standard",
+    "compliance_required": ["rohs"],
+    "notes": "Buck converter inductor. Saturation current derating factor per category-rules.md is Isat >= 1.5x peak current -- candidate must be rated >=3A (2A x 1.5), not merely >=2A.",
+    "confidence": { "score": 1.0, "reasons": ["all required parameters parsed from dedicated BOM columns"] },
+    "unresolved": []
+  },
+  "candidate": {
+    "schema_version": "v1",
+    "requirement_id": "REQ-006",
+    "mpn": "SRP1245A-100M",
+    "manufacturer": "Bourns",
+    "parameters": {
+      "inductance": { "value": "1E-5", "unit": "henry", "raw_text": "10uH", "source": "datasheet" },
+      "tolerance_pct": { "value": "20", "unit": "percent", "raw_text": "±20%", "source": "datasheet" },
+      "saturation_current": { "value": "2.5", "unit": "ampere", "raw_text": "2.5A Isat", "source": "datasheet" }
+    },
+    "footprint": {
+      "package_code": "INDC3225X180N",
+      "mounting": "smt",
+      "pin_count": 2,
+      "length_mm": "3.2",
+      "width_mm": "2.5",
+      "height_mm": "1.8",
+      "raw_text": "1210"
+    },
+    "lifecycle": "active",
+    "compliance": ["rohs"]
+  }
+}

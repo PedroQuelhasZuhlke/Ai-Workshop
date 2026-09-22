@@ -1,0 +1,13 @@
+{
+  "case_id": "known_bad_temperature_range_narrower",
+  "outcome": "fail",
+  "tier": null,
+  "expected_rules": [
+    { "rule_name": "footprint_identity", "passed": true, "reason_contains": "footprint" },
+    { "rule_name": "voltage_derating", "passed": true, "reason_contains": "60" },
+    { "rule_name": "current_derating", "passed": true, "reason_contains": "1.5" },
+    { "rule_name": "temperature_range", "passed": false, "reason_contains": "-40" }
+  ],
+  "blocking_rule": "temperature_range",
+  "hand_verified_reasoning": "Temperature range must be wider-or-equal at both ends (the direction rule). Requirement needs -40C to 85C (with the max already carrying the >=20C margin convention, so a candidate max of 105C would clear that on its own). But the candidate's cold-end limit is -20C, which does not cover the required -40C -- a hard range shrink on the low side, independent of the margin question on the high side. Voltage (60V >= 20V) and current (1.5A >= 1A) both pass easily; the sole, deliberate defect is the narrowed operating range floor."
+}

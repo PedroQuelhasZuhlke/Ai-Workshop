@@ -1,0 +1,10 @@
+{
+  "case_id": "known_bad_footprint_mismatch",
+  "outcome": "fail",
+  "tier": null,
+  "expected_rules": [
+    { "rule_name": "footprint_identity", "passed": false, "reason_contains": "0805" }
+  ],
+  "blocking_rule": "footprint_identity",
+  "hand_verified_reasoning": "Resistance (4700 ohm) and tolerance (1%) are identical between requirement and candidate. Requirement footprint is RESC1608X55N (0603); candidate footprint is RESC2012X70N (0805) -- a different body size. Footprint identity is a hard gate evaluated before any parametric comparison (evaluation order step 2): package family/value equivalence never overrides a land-pattern mismatch, so this is tier 3 / rejected regardless of how well the electricals match."
+}

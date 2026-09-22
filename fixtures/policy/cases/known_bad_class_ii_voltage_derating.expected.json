@@ -1,0 +1,12 @@
+{
+  "case_id": "known_bad_class_ii_voltage_derating",
+  "outcome": "fail",
+  "tier": null,
+  "expected_rules": [
+    { "rule_name": "footprint_identity", "passed": true, "reason_contains": "footprint" },
+    { "rule_name": "dielectric_class", "passed": true, "reason_contains": "X7R" },
+    { "rule_name": "voltage_derating", "passed": false, "reason_contains": "24" }
+  ],
+  "blocking_rule": "voltage_derating",
+  "hand_verified_reasoning": "Class II (X7R) DC voltage derating factor is <=50% of rated (category-rules.md). Requirement applied voltage 12V -> derated minimum rated voltage = 12 / 0.5 = 24V. Candidate is rated 16V. 16V clears the *nameplate* 12V applied voltage but is well below the 24V derated requirement, so the correct engine must reject it -- a naive 'rated >= applied' check would wrongly pass this candidate."
+}

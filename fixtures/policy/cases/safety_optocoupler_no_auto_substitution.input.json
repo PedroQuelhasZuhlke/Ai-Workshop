@@ -1,0 +1,52 @@
+{
+  "case_id": "safety_optocoupler_no_auto_substitution",
+  "requirement": {
+    "schema_version": "v1",
+    "requirement_id": "REQ-015",
+    "reference_designators": ["U9"],
+    "quantity_per_board": 1,
+    "category": "ic_digital",
+    "parameters": {
+      "supply_voltage": { "value": "5", "unit": "volt", "raw_text": "5V logic side", "source": "parsed" },
+      "package_pin_count": { "value": "4", "unit": "count", "raw_text": "4-pin DIP", "source": "parsed" }
+    },
+    "footprint": {
+      "package_code": "DIP-4",
+      "mounting": "tht",
+      "pin_count": 4,
+      "pitch_mm": "2.54",
+      "length_mm": "6.5",
+      "width_mm": "6.5",
+      "height_mm": "5.0",
+      "raw_text": "DIP-4"
+    },
+    "specified_mpn": { "mpn": "PC817X2NSZ1B", "manufacturer": "Sharp", "source": "parsed" },
+    "criticality": "safety",
+    "compliance_required": ["rohs"],
+    "notes": "Optocoupler providing reinforced insulation between the mains-referenced and logic-referenced domains. Detected via the 'optocoupler'/'isolator' safety-critical description tokens (category-rules.md) -- the isolation barrier's agency rating is part-specific.",
+    "confidence": { "score": 1.0, "reasons": ["all required parameters parsed from dedicated BOM columns"] },
+    "unresolved": []
+  },
+  "candidate": {
+    "schema_version": "v1",
+    "requirement_id": "REQ-015",
+    "mpn": "EL817(TA)-V",
+    "manufacturer": "Everlight",
+    "parameters": {
+      "supply_voltage": { "value": "5", "unit": "volt", "raw_text": "5V logic side", "source": "datasheet" },
+      "package_pin_count": { "value": "4", "unit": "count", "raw_text": "4-pin DIP", "source": "datasheet" }
+    },
+    "footprint": {
+      "package_code": "DIP-4",
+      "mounting": "tht",
+      "pin_count": 4,
+      "pitch_mm": "2.54",
+      "length_mm": "6.5",
+      "width_mm": "6.5",
+      "height_mm": "5.0",
+      "raw_text": "DIP-4"
+    },
+    "lifecycle": "active",
+    "compliance": ["rohs"]
+  }
+}
