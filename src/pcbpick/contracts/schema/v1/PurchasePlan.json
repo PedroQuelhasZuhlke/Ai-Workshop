@@ -1,0 +1,327 @@
+{
+  "$defs": {
+    "DecisionMode": {
+      "enum": [
+        "lowest_cost",
+        "fastest_delivery",
+        "fewest_suppliers",
+        "balanced",
+        "lowest_risk"
+      ],
+      "title": "DecisionMode",
+      "type": "string"
+    },
+    "PlanLine": {
+      "additionalProperties": false,
+      "description": "One requirement resolved to a candidate, an offer, and an order quantity.",
+      "properties": {
+        "currency": {
+          "title": "Currency",
+          "type": "string"
+        },
+        "extended_price": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Extended Price"
+        },
+        "manufacturer": {
+          "title": "Manufacturer",
+          "type": "string"
+        },
+        "mpn": {
+          "title": "Mpn",
+          "type": "string"
+        },
+        "order_qty": {
+          "exclusiveMinimum": 0,
+          "title": "Order Qty",
+          "type": "integer"
+        },
+        "requirement_id": {
+          "title": "Requirement Id",
+          "type": "string"
+        },
+        "sku": {
+          "title": "Sku",
+          "type": "string"
+        },
+        "snapshot_id": {
+          "title": "Snapshot Id",
+          "type": "string"
+        },
+        "substitution_tier": {
+          "$ref": "#/$defs/SubstitutionTier"
+        },
+        "supplier": {
+          "$ref": "#/$defs/SupplierId"
+        },
+        "unit_price": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Unit Price"
+        }
+      },
+      "required": [
+        "requirement_id",
+        "mpn",
+        "manufacturer",
+        "supplier",
+        "sku",
+        "substitution_tier",
+        "order_qty",
+        "unit_price",
+        "extended_price",
+        "currency",
+        "snapshot_id"
+      ],
+      "title": "PlanLine",
+      "type": "object"
+    },
+    "PlanTotals": {
+      "additionalProperties": false,
+      "description": "Per-supplier subtotals, shipping, and the grand total for a plan.",
+      "properties": {
+        "currency": {
+          "title": "Currency",
+          "type": "string"
+        },
+        "grand_total": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Grand Total"
+        },
+        "shipping_total": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Shipping Total"
+        },
+        "supplier_subtotals": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              }
+            ]
+          },
+          "propertyNames": {
+            "$ref": "#/$defs/SupplierId"
+          },
+          "title": "Supplier Subtotals",
+          "type": "object"
+        }
+      },
+      "required": [
+        "currency",
+        "supplier_subtotals",
+        "shipping_total",
+        "grand_total"
+      ],
+      "title": "PlanTotals",
+      "type": "object"
+    },
+    "PlanWarning": {
+      "additionalProperties": false,
+      "description": "A condition the engineer must see before approving a plan.",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/PlanWarningKind"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "requirement_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Requirement Id"
+        }
+      },
+      "required": [
+        "kind",
+        "requirement_id",
+        "message"
+      ],
+      "title": "PlanWarning",
+      "type": "object"
+    },
+    "PlanWarningKind": {
+      "description": "Reasons a plan is flagged for engineer attention before approval.",
+      "enum": [
+        "stale_offer",
+        "nrnd_lifecycle",
+        "eol_lifecycle",
+        "high_tier_substitution"
+      ],
+      "title": "PlanWarningKind",
+      "type": "string"
+    },
+    "SubstitutionTier": {
+      "description": "0 = exact match, 3 = broadest substitution the policy engine allows.",
+      "enum": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "title": "SubstitutionTier",
+      "type": "integer"
+    },
+    "SupplierId": {
+      "enum": [
+        "mouser",
+        "digikey",
+        "farnell",
+        "fixture"
+      ],
+      "title": "SupplierId",
+      "type": "string"
+    },
+    "UnfilledRequirement": {
+      "additionalProperties": false,
+      "description": "A requirement the plan could not fill, and why.",
+      "properties": {
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "requirement_id": {
+          "title": "Requirement Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "requirement_id",
+        "reason"
+      ],
+      "title": "UnfilledRequirement",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One complete way to buy the whole BOM under a single decision mode.",
+  "properties": {
+    "attrition_pct": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Attrition Pct"
+    },
+    "board_quantity": {
+      "exclusiveMinimum": 0,
+      "title": "Board Quantity",
+      "type": "integer"
+    },
+    "lines": {
+      "items": {
+        "$ref": "#/$defs/PlanLine"
+      },
+      "title": "Lines",
+      "type": "array"
+    },
+    "longest_lead_time_days": {
+      "minimum": 0,
+      "title": "Longest Lead Time Days",
+      "type": "integer"
+    },
+    "mode": {
+      "$ref": "#/$defs/DecisionMode"
+    },
+    "schema_version": {
+      "default": "v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "snapshot_ids": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Snapshot Ids",
+      "type": "array"
+    },
+    "supplier_count": {
+      "minimum": 0,
+      "title": "Supplier Count",
+      "type": "integer"
+    },
+    "totals": {
+      "$ref": "#/$defs/PlanTotals"
+    },
+    "unfilled": {
+      "items": {
+        "$ref": "#/$defs/UnfilledRequirement"
+      },
+      "title": "Unfilled",
+      "type": "array"
+    },
+    "warnings": {
+      "items": {
+        "$ref": "#/$defs/PlanWarning"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "mode",
+    "board_quantity",
+    "attrition_pct",
+    "lines",
+    "totals",
+    "longest_lead_time_days",
+    "supplier_count",
+    "unfilled",
+    "warnings",
+    "snapshot_ids"
+  ],
+  "title": "PurchasePlan",
+  "type": "object"
+}

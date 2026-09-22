@@ -1,0 +1,20 @@
+{
+  "additionalProperties": false,
+  "description": "A requirement the plan could not fill, and why.",
+  "properties": {
+    "reason": {
+      "title": "Reason",
+      "type": "string"
+    },
+    "requirement_id": {
+      "title": "Requirement Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "requirement_id",
+    "reason"
+  ],
+  "title": "UnfilledRequirement",
+  "type": "object"
+}

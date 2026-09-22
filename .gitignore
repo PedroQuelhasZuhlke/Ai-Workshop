@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# Local run artifacts (see .github/copilot-instructions.md)
+runs/
+
+# Node (web/ frontend, later milestones)
+node_modules/

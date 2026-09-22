@@ -1,8 +1,10 @@
 # Decision Log — Harness Design Session
 
 **Date:** 2026-09-22
-**Scope:** Initial design of the PCB parts picking tool and creation of the agent-facing harness.
-**Status:** Design agreed, harness resources created, no application code written yet.
+**Scope:** Initial design of the PCB parts picking tool, creation of the agent-facing
+harness, the roadmap-to-agent factory prompts, and execution of milestone M0.
+**Status:** Harness resources created; roadmap factory prompts created; M0 (contracts
+and skeleton) implemented and verified, awaiting user review before M1.
 
 ---
 
@@ -155,5 +157,94 @@ Packaged into skills so agents inherit it rather than rediscovering it:
 
 ## 10. Next action
 
-M0 — Pydantic contracts, category parameter declarations, stage runner, run artifact
-writer, and CLI skeleton. Not started.
+M1 — Ingest (BOM readers, EDA profile detection, column mapping). Not started. Run
+`/roadmap-m1-ingest` once M0 is reviewed and approved.
+
+## 11. Roadmap-to-agent mapping
+
+Each roadmap milestone was mapped to the custom agent(s) that own its scope:
+
+| Milestone | Primary agent(s) |
+|---|---|
+| M0 — Contracts and skeleton | `contract-architect` (contracts only; stage protocol/CLI built directly, no agent owns runner scaffolding) |
+| M1 — Ingest | `fixture-curator` (sample BOMs) → `stage-builder` (ingest stage) |
+| M2 — Normalization and classification | `fixture-curator` → `stage-builder` |
+| M3 — Policy engine | `fixture-curator` → `stage-builder` → `invariant-auditor` (safety-core review) |
+| M4 — Sourcing against fixtures | `supplier-adapter-builder` (protocol + `FixtureAdapter`) → `fixture-curator` (catalog snapshots) → `stage-builder` (evaluate stage) |
+| M5 — Planning and export | `stage-builder` → `invariant-auditor` (money/export-injection review) |
+| M6 — Web application | No dedicated pcbpick agent — built directly; contract/stage-shaped pieces delegated out; `invariant-auditor` reviews authorization |
+| M7 — Live supplier adapters | `supplier-adapter-builder` → `invariant-auditor` (credential/network review — highest risk milestone) |
+| M8 — Evals and hardening | `fixture-curator` (golden-BOM suite) → `stage-builder` (replay/observability) → `invariant-auditor` (full audit) |
+
+Rule of thumb recorded for future milestones: `contracts/` → `contract-architect`;
+any of `ingest/normalize/classify/policy/sourcing/planning/exporters/pipeline` →
+`stage-builder`; `sourcing/suppliers/` → `supplier-adapter-builder`; test
+data/eval cases → `fixture-curator`; safety/determinism review → `invariant-auditor`.
+
+## 12. Roadmap factory prompts
+
+Nine chained prompt files were created in `.github/prompts/`, one per milestone:
+`roadmap-m0-contracts-skeleton.prompt.md` through `roadmap-m8-evals-hardening.prompt.md`.
+
+Each prompt:
+- reads the matching roadmap section and checks the prior milestone is actually done
+  before starting
+- delegates to the milestone's owning agent(s) (section 11) via `runSubagent`, in order
+- runs an `invariant-auditor` pass where safety, money, or security risk is highest
+- ends with an explicit **STOP** review gate — never auto-continues — and names the
+  exact next slash command to run once the user approves
+
+This turns the roadmap into a manually-gated pipeline: one milestone per session,
+reviewed by the user before the next is started. Recorded in repo memory
+(`/memories/repo/roadmap-factory.md`) so future sessions know the chain exists.
+
+## 13. M0 execution evidence
+
+**Scaffold built directly** (no agent owns pipeline/CLI scaffolding):
+- `pyproject.toml` — uv + hatchling, `[dependency-groups] dev` (pytest, ruff, mypy,
+  jsonschema), ruff/mypy config
+- `.gitignore`, `.github/workflows/ci.yml` (uv sync → ruff → mypy → pytest)
+- `src/pcbpick/errors.py` — `PcbPickError`, `RunNotFoundError`, `StageNotFoundError`,
+  `ContractViolationError`
+- `src/pcbpick/pipeline/` — `context.py` (`StageContext`, `PipelineConfig`),
+  `results.py` (`Severity`, `StageIssue`, `StageResult`), `stage.py` (`Stage`
+  protocol), `models.py` (`RunManifest`, `StageMeta`), `runner.py`
+  (`PipelineRunner`, empty `STAGES` list — first entries land in M1)
+- `src/pcbpick/cli.py` — `pcbpick run <file>`, `pcbpick resume <run_id> --from <stage>`
+- `tests/pipeline/test_runner.py`, `tests/unit/test_cli.py`
+
+**Contract layer delegated to `contract-architect`** under `src/pcbpick/contracts/`:
+all enums (`ComponentCategory`, `SupplierId`, `Lifecycle`, `Packaging`,
+`SubstitutionTier`, `Criticality`, `ComplianceTag`, `DecisionMode`, `ValueSource`, plus
+`MountingType`/`ExportFormat`/`PlanWarningKind`); core models (`BomLine`,
+`NormalizedRequirement`, `ParameterValue`, `PartCandidate`, `SupplierOffer`,
+`PurchasePlan` + `PlanLine`/`PlanTotals`/`UnfilledRequirement`/`PlanWarning`,
+`SupplierExport`, `PolicyResult`, `Footprint`, `MpnRef`, `Confidence`, `Evidence`,
+`PriceBreak`); `categories.py` (required/optional parameters per category);
+`version.py` (`SCHEMA_VERSION = "v1"`); JSON Schema generated and committed under
+`src/pcbpick/contracts/schema/v1/` via `export_schema.py`; `migrations/` placeholder.
+All models `frozen=True, extra="forbid"`, `Decimal` for money/physical quantities,
+`snapshot_id`/`fetched_at` mandatory on `SupplierOffer`. Tests added under
+`tests/contracts/` (round-trip, frozen/forbid-extra, schema-matches-regeneration).
+
+**Fixes applied during verification** (found by running the real toolchain, not by
+inspection alone):
+- 3 ruff violations in the hand-written pipeline code — `StrEnum` instead of
+  `str, Enum`, PEP 695 generic syntax (`class StageResult[OutputT]`) instead of
+  `Generic[TypeVar]`, `datetime.UTC` instead of `datetime.timezone.utc`
+- Missing `tests/__init__.py` and subpackage `__init__.py` files — contract tests use
+  `from tests.contracts.conftest import ...`, which failed collection without them
+- `[tool.uv] dev-dependencies` (deprecated) migrated to `[dependency-groups] dev`
+
+**Verification performed** (via `uv`, per the project's "no bare `pip`" convention):
+- `uv sync` — resolved and installed cleanly
+- `uv run ruff check .` — all checks passed
+- `uv run mypy` (strict) — no issues in 23 source files
+- `uv run pytest -q` — **95/95 passed**, including the 7 pipeline/CLI tests
+- Manual CLI walkthrough: `pcbpick run <sample.csv>` created
+  `runs/<run_id>/meta.json` with correct `source_file_sha256` and empty `stages: []`;
+  `pcbpick resume <run_id> --from ingest` failed cleanly with `StageNotFoundError`
+  (no stages registered yet), confirming the resume plumbing without real stage logic
+
+**Done-when criterion met:** an empty pipeline runs end to end and writes artifacts.
+Nothing was committed or pushed to git — file changes only, pending user review.

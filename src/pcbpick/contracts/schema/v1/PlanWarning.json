@@ -1,0 +1,44 @@
+{
+  "$defs": {
+    "PlanWarningKind": {
+      "description": "Reasons a plan is flagged for engineer attention before approval.",
+      "enum": [
+        "stale_offer",
+        "nrnd_lifecycle",
+        "eol_lifecycle",
+        "high_tier_substitution"
+      ],
+      "title": "PlanWarningKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A condition the engineer must see before approving a plan.",
+  "properties": {
+    "kind": {
+      "$ref": "#/$defs/PlanWarningKind"
+    },
+    "message": {
+      "title": "Message",
+      "type": "string"
+    },
+    "requirement_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Requirement Id"
+    }
+  },
+  "required": [
+    "kind",
+    "requirement_id",
+    "message"
+  ],
+  "title": "PlanWarning",
+  "type": "object"
+}

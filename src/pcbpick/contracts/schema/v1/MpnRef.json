@@ -1,0 +1,43 @@
+{
+  "$defs": {
+    "ValueSource": {
+      "enum": [
+        "parsed",
+        "llm_inferred",
+        "engineer_entered",
+        "datasheet"
+      ],
+      "title": "ValueSource",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A manufacturer part number reference, with provenance for where it was captured.",
+  "properties": {
+    "manufacturer": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Manufacturer"
+    },
+    "mpn": {
+      "title": "Mpn",
+      "type": "string"
+    },
+    "source": {
+      "$ref": "#/$defs/ValueSource"
+    }
+  },
+  "required": [
+    "mpn",
+    "source"
+  ],
+  "title": "MpnRef",
+  "type": "object"
+}

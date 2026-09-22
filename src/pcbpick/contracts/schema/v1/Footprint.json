@@ -1,0 +1,131 @@
+{
+  "$defs": {
+    "MountingType": {
+      "description": "Footprint mounting style \u2014 part of footprint identity, so it is closed here.",
+      "enum": [
+        "smt",
+        "tht"
+      ],
+      "title": "MountingType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Package/land-pattern identity. Substitutions must match every known field exactly.",
+  "properties": {
+    "height_mm": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Height Mm"
+    },
+    "length_mm": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Length Mm"
+    },
+    "mounting": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MountingType"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "package_code": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Package Code"
+    },
+    "pin_count": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Pin Count"
+    },
+    "pitch_mm": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Pitch Mm"
+    },
+    "raw_text": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Raw Text"
+    },
+    "width_mm": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Width Mm"
+    }
+  },
+  "title": "Footprint",
+  "type": "object"
+}

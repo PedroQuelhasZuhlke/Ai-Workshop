@@ -1,0 +1,43 @@
+[project]
+name = "pcbpick"
+version = "0.1.0"
+description = "Turns a PCB bill of materials into reviewed, sourceable purchase plans."
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.7",
+    "click>=8.1",
+]
+
+[project.scripts]
+pcbpick = "pcbpick.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pcbpick"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+    "mypy>=1.10",
+    "jsonschema>=4.22",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+mypy_path = "src"
+files = ["src"]

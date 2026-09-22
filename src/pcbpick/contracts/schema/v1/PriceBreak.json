@@ -1,0 +1,35 @@
+{
+  "additionalProperties": false,
+  "description": "One (quantity, unit_price) rung on a supplier's price-break ladder.",
+  "properties": {
+    "currency": {
+      "title": "Currency",
+      "type": "string"
+    },
+    "quantity": {
+      "exclusiveMinimum": 0,
+      "title": "Quantity",
+      "type": "integer"
+    },
+    "unit_price": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Unit Price"
+    }
+  },
+  "required": [
+    "quantity",
+    "unit_price",
+    "currency"
+  ],
+  "title": "PriceBreak",
+  "type": "object"
+}

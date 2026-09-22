@@ -1,0 +1,105 @@
+{
+  "$defs": {
+    "SubstitutionTier": {
+      "description": "0 = exact match, 3 = broadest substitution the policy engine allows.",
+      "enum": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "title": "SubstitutionTier",
+      "type": "integer"
+    },
+    "SupplierId": {
+      "enum": [
+        "mouser",
+        "digikey",
+        "farnell",
+        "fixture"
+      ],
+      "title": "SupplierId",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One requirement resolved to a candidate, an offer, and an order quantity.",
+  "properties": {
+    "currency": {
+      "title": "Currency",
+      "type": "string"
+    },
+    "extended_price": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Extended Price"
+    },
+    "manufacturer": {
+      "title": "Manufacturer",
+      "type": "string"
+    },
+    "mpn": {
+      "title": "Mpn",
+      "type": "string"
+    },
+    "order_qty": {
+      "exclusiveMinimum": 0,
+      "title": "Order Qty",
+      "type": "integer"
+    },
+    "requirement_id": {
+      "title": "Requirement Id",
+      "type": "string"
+    },
+    "sku": {
+      "title": "Sku",
+      "type": "string"
+    },
+    "snapshot_id": {
+      "title": "Snapshot Id",
+      "type": "string"
+    },
+    "substitution_tier": {
+      "$ref": "#/$defs/SubstitutionTier"
+    },
+    "supplier": {
+      "$ref": "#/$defs/SupplierId"
+    },
+    "unit_price": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Unit Price"
+    }
+  },
+  "required": [
+    "requirement_id",
+    "mpn",
+    "manufacturer",
+    "supplier",
+    "sku",
+    "substitution_tier",
+    "order_qty",
+    "unit_price",
+    "extended_price",
+    "currency",
+    "snapshot_id"
+  ],
+  "title": "PlanLine",
+  "type": "object"
+}

@@ -1,0 +1,51 @@
+{
+  "additionalProperties": false,
+  "description": "A pointer to where a candidate's data came from \u2014 datasheet, catalog field, snapshot.",
+  "properties": {
+    "description": {
+      "title": "Description",
+      "type": "string"
+    },
+    "field_name": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Field Name"
+    },
+    "snapshot_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Snapshot Id"
+    },
+    "url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Url"
+    }
+  },
+  "required": [
+    "description"
+  ],
+  "title": "Evidence",
+  "type": "object"
+}

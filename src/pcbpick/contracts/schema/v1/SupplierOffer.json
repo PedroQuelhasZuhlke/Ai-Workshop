@@ -1,0 +1,143 @@
+{
+  "$defs": {
+    "Packaging": {
+      "enum": [
+        "cut_tape",
+        "reel",
+        "tube",
+        "tray",
+        "bulk"
+      ],
+      "title": "Packaging",
+      "type": "string"
+    },
+    "PriceBreak": {
+      "additionalProperties": false,
+      "description": "One (quantity, unit_price) rung on a supplier's price-break ladder.",
+      "properties": {
+        "currency": {
+          "title": "Currency",
+          "type": "string"
+        },
+        "quantity": {
+          "exclusiveMinimum": 0,
+          "title": "Quantity",
+          "type": "integer"
+        },
+        "unit_price": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Unit Price"
+        }
+      },
+      "required": [
+        "quantity",
+        "unit_price",
+        "currency"
+      ],
+      "title": "PriceBreak",
+      "type": "object"
+    },
+    "SupplierId": {
+      "enum": [
+        "mouser",
+        "digikey",
+        "farnell",
+        "fixture"
+      ],
+      "title": "SupplierId",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One supplier's terms for one part as of a catalog snapshot. Re-validate before export.",
+  "properties": {
+    "fetched_at": {
+      "format": "date-time",
+      "title": "Fetched At",
+      "type": "string"
+    },
+    "lead_time_days": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Lead Time Days"
+    },
+    "moq": {
+      "exclusiveMinimum": 0,
+      "title": "Moq",
+      "type": "integer"
+    },
+    "packaging": {
+      "$ref": "#/$defs/Packaging"
+    },
+    "price_breaks": {
+      "items": {
+        "$ref": "#/$defs/PriceBreak"
+      },
+      "title": "Price Breaks",
+      "type": "array"
+    },
+    "schema_version": {
+      "default": "v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "sku": {
+      "title": "Sku",
+      "type": "string"
+    },
+    "snapshot_id": {
+      "title": "Snapshot Id",
+      "type": "string"
+    },
+    "spq": {
+      "exclusiveMinimum": 0,
+      "title": "Spq",
+      "type": "integer"
+    },
+    "stock": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Stock"
+    },
+    "supplier": {
+      "$ref": "#/$defs/SupplierId"
+    }
+  },
+  "required": [
+    "supplier",
+    "sku",
+    "packaging",
+    "stock",
+    "moq",
+    "spq",
+    "price_breaks",
+    "lead_time_days",
+    "snapshot_id",
+    "fetched_at"
+  ],
+  "title": "SupplierOffer",
+  "type": "object"
+}

@@ -1,0 +1,573 @@
+{
+  "$defs": {
+    "ComplianceTag": {
+      "enum": [
+        "rohs",
+        "reach",
+        "aec_q100",
+        "aec_q200"
+      ],
+      "title": "ComplianceTag",
+      "type": "string"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "description": "A pointer to where a candidate's data came from \u2014 datasheet, catalog field, snapshot.",
+      "properties": {
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "field_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Field Name"
+        },
+        "snapshot_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Snapshot Id"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Url"
+        }
+      },
+      "required": [
+        "description"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "Footprint": {
+      "additionalProperties": false,
+      "description": "Package/land-pattern identity. Substitutions must match every known field exactly.",
+      "properties": {
+        "height_mm": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Height Mm"
+        },
+        "length_mm": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Length Mm"
+        },
+        "mounting": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MountingType"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "package_code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Package Code"
+        },
+        "pin_count": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pin Count"
+        },
+        "pitch_mm": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pitch Mm"
+        },
+        "raw_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Raw Text"
+        },
+        "width_mm": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Width Mm"
+        }
+      },
+      "title": "Footprint",
+      "type": "object"
+    },
+    "Lifecycle": {
+      "enum": [
+        "active",
+        "nrnd",
+        "eol",
+        "obsolete",
+        "unknown"
+      ],
+      "title": "Lifecycle",
+      "type": "string"
+    },
+    "MountingType": {
+      "description": "Footprint mounting style \u2014 part of footprint identity, so it is closed here.",
+      "enum": [
+        "smt",
+        "tht"
+      ],
+      "title": "MountingType",
+      "type": "string"
+    },
+    "Packaging": {
+      "enum": [
+        "cut_tape",
+        "reel",
+        "tube",
+        "tray",
+        "bulk"
+      ],
+      "title": "Packaging",
+      "type": "string"
+    },
+    "ParameterValue": {
+      "additionalProperties": false,
+      "description": "A single requirement or candidate parameter \u2014 always a value plus its provenance.",
+      "properties": {
+        "max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max"
+        },
+        "min": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min"
+        },
+        "raw_text": {
+          "title": "Raw Text",
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/ValueSource"
+        },
+        "tolerance_pct": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tolerance Pct"
+        },
+        "unit": {
+          "title": "Unit",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "value",
+        "unit",
+        "raw_text",
+        "source"
+      ],
+      "title": "ParameterValue",
+      "type": "object"
+    },
+    "PolicyResult": {
+      "additionalProperties": false,
+      "description": "One rule's verdict, emitted for every rule evaluated \u2014 including passes.",
+      "properties": {
+        "passed": {
+          "title": "Passed",
+          "type": "boolean"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "rule_name": {
+          "title": "Rule Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "rule_name",
+        "passed",
+        "reason"
+      ],
+      "title": "PolicyResult",
+      "type": "object"
+    },
+    "PriceBreak": {
+      "additionalProperties": false,
+      "description": "One (quantity, unit_price) rung on a supplier's price-break ladder.",
+      "properties": {
+        "currency": {
+          "title": "Currency",
+          "type": "string"
+        },
+        "quantity": {
+          "exclusiveMinimum": 0,
+          "title": "Quantity",
+          "type": "integer"
+        },
+        "unit_price": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            }
+          ],
+          "title": "Unit Price"
+        }
+      },
+      "required": [
+        "quantity",
+        "unit_price",
+        "currency"
+      ],
+      "title": "PriceBreak",
+      "type": "object"
+    },
+    "SubstitutionTier": {
+      "description": "0 = exact match, 3 = broadest substitution the policy engine allows.",
+      "enum": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "title": "SubstitutionTier",
+      "type": "integer"
+    },
+    "SupplierId": {
+      "enum": [
+        "mouser",
+        "digikey",
+        "farnell",
+        "fixture"
+      ],
+      "title": "SupplierId",
+      "type": "string"
+    },
+    "SupplierOffer": {
+      "additionalProperties": false,
+      "description": "One supplier's terms for one part as of a catalog snapshot. Re-validate before export.",
+      "properties": {
+        "fetched_at": {
+          "format": "date-time",
+          "title": "Fetched At",
+          "type": "string"
+        },
+        "lead_time_days": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Lead Time Days"
+        },
+        "moq": {
+          "exclusiveMinimum": 0,
+          "title": "Moq",
+          "type": "integer"
+        },
+        "packaging": {
+          "$ref": "#/$defs/Packaging"
+        },
+        "price_breaks": {
+          "items": {
+            "$ref": "#/$defs/PriceBreak"
+          },
+          "title": "Price Breaks",
+          "type": "array"
+        },
+        "schema_version": {
+          "default": "v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "sku": {
+          "title": "Sku",
+          "type": "string"
+        },
+        "snapshot_id": {
+          "title": "Snapshot Id",
+          "type": "string"
+        },
+        "spq": {
+          "exclusiveMinimum": 0,
+          "title": "Spq",
+          "type": "integer"
+        },
+        "stock": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Stock"
+        },
+        "supplier": {
+          "$ref": "#/$defs/SupplierId"
+        }
+      },
+      "required": [
+        "supplier",
+        "sku",
+        "packaging",
+        "stock",
+        "moq",
+        "spq",
+        "price_breaks",
+        "lead_time_days",
+        "snapshot_id",
+        "fetched_at"
+      ],
+      "title": "SupplierOffer",
+      "type": "object"
+    },
+    "ValueSource": {
+      "enum": [
+        "parsed",
+        "llm_inferred",
+        "engineer_entered",
+        "datasheet"
+      ],
+      "title": "ValueSource",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A candidate part matched to a requirement, with every policy check and offer attached.",
+  "properties": {
+    "compliance": {
+      "items": {
+        "$ref": "#/$defs/ComplianceTag"
+      },
+      "title": "Compliance",
+      "type": "array"
+    },
+    "evidence": {
+      "items": {
+        "$ref": "#/$defs/Evidence"
+      },
+      "title": "Evidence",
+      "type": "array"
+    },
+    "footprint": {
+      "$ref": "#/$defs/Footprint"
+    },
+    "lifecycle": {
+      "$ref": "#/$defs/Lifecycle"
+    },
+    "manufacturer": {
+      "title": "Manufacturer",
+      "type": "string"
+    },
+    "mpn": {
+      "title": "Mpn",
+      "type": "string"
+    },
+    "offers": {
+      "items": {
+        "$ref": "#/$defs/SupplierOffer"
+      },
+      "title": "Offers",
+      "type": "array"
+    },
+    "parameters": {
+      "additionalProperties": {
+        "$ref": "#/$defs/ParameterValue"
+      },
+      "title": "Parameters",
+      "type": "object"
+    },
+    "policy_results": {
+      "items": {
+        "$ref": "#/$defs/PolicyResult"
+      },
+      "title": "Policy Results",
+      "type": "array"
+    },
+    "rationale": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Rationale"
+    },
+    "requirement_id": {
+      "title": "Requirement Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "default": "v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "substitution_tier": {
+      "$ref": "#/$defs/SubstitutionTier"
+    }
+  },
+  "required": [
+    "requirement_id",
+    "mpn",
+    "manufacturer",
+    "parameters",
+    "footprint",
+    "lifecycle",
+    "compliance",
+    "substitution_tier",
+    "policy_results",
+    "rationale",
+    "evidence",
+    "offers"
+  ],
+  "title": "PartCandidate",
+  "type": "object"
+}

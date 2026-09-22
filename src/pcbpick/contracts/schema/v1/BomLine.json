@@ -1,0 +1,58 @@
+{
+  "additionalProperties": false,
+  "description": "One row exactly as it appeared in the source file. Never cleaned \u2014 the audit anchor.",
+  "properties": {
+    "mapping_profile": {
+      "title": "Mapping Profile",
+      "type": "string"
+    },
+    "quantity": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Quantity"
+    },
+    "raw": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Raw",
+      "type": "object"
+    },
+    "reference_designators": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Reference Designators",
+      "type": "array"
+    },
+    "row_index": {
+      "title": "Row Index",
+      "type": "integer"
+    },
+    "schema_version": {
+      "default": "v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_file": {
+      "title": "Source File",
+      "type": "string"
+    }
+  },
+  "required": [
+    "row_index",
+    "raw",
+    "reference_designators",
+    "quantity",
+    "source_file",
+    "mapping_profile"
+  ],
+  "title": "BomLine",
+  "type": "object"
+}

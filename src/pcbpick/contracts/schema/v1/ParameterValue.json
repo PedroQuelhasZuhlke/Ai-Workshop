@@ -1,0 +1,101 @@
+{
+  "$defs": {
+    "ValueSource": {
+      "enum": [
+        "parsed",
+        "llm_inferred",
+        "engineer_entered",
+        "datasheet"
+      ],
+      "title": "ValueSource",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A single requirement or candidate parameter \u2014 always a value plus its provenance.",
+  "properties": {
+    "max": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Max"
+    },
+    "min": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Min"
+    },
+    "raw_text": {
+      "title": "Raw Text",
+      "type": "string"
+    },
+    "source": {
+      "$ref": "#/$defs/ValueSource"
+    },
+    "tolerance_pct": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tolerance Pct"
+    },
+    "unit": {
+      "title": "Unit",
+      "type": "string"
+    },
+    "value": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Value"
+    }
+  },
+  "required": [
+    "value",
+    "unit",
+    "raw_text",
+    "source"
+  ],
+  "title": "ParameterValue",
+  "type": "object"
+}

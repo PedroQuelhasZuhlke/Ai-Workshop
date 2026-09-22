@@ -1,0 +1,74 @@
+{
+  "$defs": {
+    "SupplierId": {
+      "enum": [
+        "mouser",
+        "digikey",
+        "farnell",
+        "fixture"
+      ],
+      "title": "SupplierId",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Per-supplier subtotals, shipping, and the grand total for a plan.",
+  "properties": {
+    "currency": {
+      "title": "Currency",
+      "type": "string"
+    },
+    "grand_total": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Grand Total"
+    },
+    "shipping_total": {
+      "anyOf": [
+        {
+          "minimum": 0.0,
+          "type": "number"
+        },
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        }
+      ],
+      "title": "Shipping Total"
+    },
+    "supplier_subtotals": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "type": "string"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/SupplierId"
+      },
+      "title": "Supplier Subtotals",
+      "type": "object"
+    }
+  },
+  "required": [
+    "currency",
+    "supplier_subtotals",
+    "shipping_total",
+    "grand_total"
+  ],
+  "title": "PlanTotals",
+  "type": "object"
+}

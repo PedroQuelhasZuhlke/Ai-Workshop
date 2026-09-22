@@ -1,0 +1,25 @@
+{
+  "additionalProperties": false,
+  "description": "One rule's verdict, emitted for every rule evaluated \u2014 including passes.",
+  "properties": {
+    "passed": {
+      "title": "Passed",
+      "type": "boolean"
+    },
+    "reason": {
+      "title": "Reason",
+      "type": "string"
+    },
+    "rule_name": {
+      "title": "Rule Name",
+      "type": "string"
+    }
+  },
+  "required": [
+    "rule_name",
+    "passed",
+    "reason"
+  ],
+  "title": "PolicyResult",
+  "type": "object"
+}
