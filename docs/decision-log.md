@@ -442,3 +442,106 @@ the fixture was wrong about.
 the correct reason, and known-good ones pass at the correct tier — verified case by
 case, not just via aggregate pass count. Awaiting explicit user approval before
 `/roadmap-m4-sourcing-fixtures`.
+
+## 15. M4 — Sourcing against fixtures (2026-09-22/23)
+
+**Precondition check:** M3 confirmed complete before starting — `PolicyStage`
+verified to emit an exhaustive `PolicyResult` list (passes and failures) for every
+rule, backed by the 18-case `fixtures/policy/` suite, per the M4 factory prompt's
+instruction to stop rather than proceed if M3 wasn't actually done.
+
+**Scope implemented:** the `SupplierAdapter` protocol, `FixtureAdapter` reading
+pinned JSON catalog snapshots, a hand-authored golden-BOM catalog snapshot (22
+parts) covering `fixtures/boms/kicad_bom.csv`, the `expand` stage (requirement →
+`SourcingQuery`), the `source` stage (candidate assembly with MPN dedup and
+manufacturer-name normalization), and the `evaluate` stage (schema-validated
+rationale generation via the `candidate_rationale` LLM call site).
+
+**Agent delegation, in order (per section 11's rule of thumb):**
+1. `supplier-adapter-builder` defined `src/pcbpick/sourcing/types.py`
+   (`SourcingQuery`, `CatalogHit`, `CatalogSku`, `CatalogPart`),
+   `src/pcbpick/sourcing/manufacturers.py`, the `SupplierAdapter` protocol
+   (`src/pcbpick/sourcing/suppliers/protocol.py`), and `FixtureAdapter`
+   (`src/pcbpick/sourcing/suppliers/fixture.py`), plus its own small contract-test
+   snapshot (`fixtures/catalogs/_adapter_contract_test.json`).
+2. `fixture-curator` built `fixtures/catalogs/kicad_golden_snapshot.json` +
+   `README.md`: every sourceable `kicad_bom.csv` line paired with its exact-MPN
+   part, at least one policy-clean cross-manufacturer alternative, and labeled
+   decoys (out-of-stock+lead-time, missing MOQ/SPQ, non-USD price breaks,
+   NRND/obsolete lifecycle, wrong-footprint, a near-duplicate MPN pair, and one
+   MPN shared by two different manufacturers).
+3. `stage-builder` implemented `src/pcbpick/sourcing/expand.py`,
+   `assembly.py`, `stage.py` (`SourceStage`), `evaluate.py` (`EvaluateStage`),
+   and `src/pcbpick/llm/templates/candidate_rationale.md`, with stage/pipeline
+   tests for all of it.
+
+**Decision: `source`'s output type is the existing `PrePolicyCandidate`
+(`pcbpick.policy.candidate_input`), not a new `contracts/` type.** It was already
+defined in M3 specifically as "the subset of `PartCandidate` the policy engine
+consumes" and carries no `offers` field — offer resolution is a separate,
+not-yet-built `resolve` stage per `docs/architecture.md`'s stage table, out of M4
+scope. This avoided a contracts change (and therefore a `contract-architect` pass)
+for a milestone whose owning agents were fixed as `supplier-adapter-builder` →
+`fixture-curator` → `stage-builder`.
+
+**Decision: the `candidate_rationale` LLM response model is not a versioned
+contract.** Defined locally in `sourcing/evaluate.py` (`CandidateRationale`,
+`rationale: str` + `concerns: list[str]`), same status as `PrePolicyCandidate` —
+its output is attached to a candidate's `rationale` field, never authoritative,
+and concerns surface only as `WARNING` `StageIssue`s, never a tier change.
+
+**Decision: policy runs before evaluate, enforced at the code level, not just by
+pipeline ordering.** `EvaluateStage` never calls the LLM for a
+`substitution_tier == TIER_3` candidate — it is skipped with an `INFO`
+`rationale_skipped_rejected_candidate` issue instead. Verified directly: a full
+`expand → source → policy → evaluate` chain test
+(`tests/pipeline/test_sourcing_pipeline.py`) asserts the LLM call count is zero for
+tier-3 candidates and that no tier-3 candidate ever appears in `evaluate`'s output.
+
+**Decision: `SourceStage` never attributes fetched catalog details to the wrong
+manufacturer.** `SupplierAdapter.details(mpn)` takes only an MPN and can return at
+most one `CatalogPart`; when one MPN is shared by multiple manufacturers (the
+golden snapshot's `ABM3-16.000MHZ-D2Y-T` Abracon/ECS Inc case), `search()` exposes
+both as distinct `CatalogHit`s but `details()` can only ever return the
+first-loaded part. Rather than attribute that part's electrical/lifecycle data to
+a hit from a different manufacturer, `SourceStage` compares the fetched
+`CatalogPart.manufacturer` (normalized) against the hit's own manufacturer
+(normalized) and skips the mismatch with a `catalog_details_missing` `WARNING`
+issue — inventing the attribution would have violated the "never invent a value
+the source did not state" rule, at the cost of that manufacturer's variant simply
+not surfacing as a candidate in this milestone.
+
+**Decision: near-duplicate MPNs are not collapsed by string similarity.**
+`RC0603FR-0710KL` vs. `RC0603FR-0710KLTR` (the same Yageo 10k 0603 part under a
+tape-and-reel packaging suffix) are deliberately kept as two distinct candidates —
+dedup keys on the exact `(requirement_id, mpn, normalized manufacturer)` tuple.
+Collapsing on a fuzzy/prefix match would have been a silent, undocumented
+judgment call about which MPN "is" the real part; the fixture and the code both
+treat this as a defensible future refinement, not a M4 requirement.
+
+**Contract gap found and deliberately not fixed:** `contracts.offer.SupplierOffer.
+moq`/`.spq` are required positive `int`s with no `None` option, but a real catalog
+can legitimately omit either (the golden snapshot's KEMET SKU exercises exactly
+this). `FixtureAdapter.offers()` returns `[]` for such a SKU rather than fabricate
+a value, preserving invariant 5 (supplier facts are never guessed) at the cost of
+that offer simply not being resolvable yet. Fixing it properly means widening
+both fields to `int | None` — a major-version bump under
+`contracts.instructions.md` (schema regen, migration, fixture/eval sweep) — flagged
+for a `contract-architect` pass before M5's planning stage needs to consume
+offers with missing MOQ/SPQ.
+
+**Verification performed:**
+- `pytest -q` — **281 passed**, 0 network-related imports
+  (`requests`/`httpx`/`urllib`/`socket`) found anywhere under `src/pcbpick/sourcing/`
+- `ruff check .` — all checks passed
+- `mypy --strict` — no issues in 65 source files
+- Manual end-to-end run of `expand → source → policy → evaluate` against the
+  hand-built `kicad_bom.csv`-derived requirements: 10 policy-clean candidates
+  surfaced across 4 requirements (tiers 1–2), each carrying a `rationale`; 4
+  tier-3 candidates (all failing `footprint_identity`) confirmed rejected by
+  policy and never reaching the LLM
+
+**Done-when criterion met:** a golden BOM (`kicad_bom.csv`) produces ranked,
+policy-clean candidates with rationale, fully offline — demonstrated case by case
+in the manual run above, not just via aggregate pass count. Awaiting explicit user
+approval before `/roadmap-m5-planning-export`.

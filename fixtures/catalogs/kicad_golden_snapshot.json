@@ -1,0 +1,786 @@
+{
+  "snapshot_id": "fixture-kicad-golden-2026-01-15",
+  "supplier": "fixture",
+  "fetched_at": "2026-01-15T00:00:00Z",
+  "parts": [
+    {
+      "mpn": "RC0603FR-0710KL",
+      "manufacturer": "Yageo",
+      "category": "resistor",
+      "parameters": {
+        "resistance": { "value": "10000", "unit": "ohm", "raw_text": "10.0k", "source": "datasheet" },
+        "tolerance_pct": { "value": "1", "unit": "percent", "raw_text": "1%", "source": "datasheet" },
+        "power_rating": { "value": "0.1", "unit": "watt", "raw_text": "100mW", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "RESC1608X55N",
+        "mounting": "smt",
+        "pin_count": 2,
+        "length_mm": "1.6",
+        "width_mm": "0.8",
+        "height_mm": "0.55",
+        "raw_text": "0603"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs", "reach"],
+      "skus": [
+        {
+          "sku": "YAG-RC0603FR-0710KL",
+          "packaging": "cut_tape",
+          "stock": 850000,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.0100", "currency": "USD" },
+            { "quantity": 1000, "unit_price": "0.0038", "currency": "USD" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    },
+    {
+      "mpn": "CRCW060310K0FKEA",
+      "manufacturer": "Vishay",
+      "category": "resistor",
+      "parameters": {
+        "resistance": { "value": "10000", "unit": "ohm", "raw_text": "10.0k", "source": "datasheet" },
+        "tolerance_pct": { "value": "1", "unit": "percent", "raw_text": "1%", "source": "datasheet" },
+        "power_rating": { "value": "0.1", "unit": "watt", "raw_text": "100mW", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "RESC1608X55N",
+        "mounting": "smt",
+        "pin_count": 2,
+        "length_mm": "1.6",
+        "width_mm": "0.8",
+        "height_mm": "0.55",
+        "raw_text": "0603"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs", "reach"],
+      "skus": [
+        {
+          "sku": "VIS-CRCW0603-10K0F",
+          "packaging": "reel",
+          "stock": 500000,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.0110", "currency": "USD" },
+            { "quantity": 100, "unit_price": "0.0075", "currency": "USD" },
+            { "quantity": 1000, "unit_price": "0.0041", "currency": "USD" },
+            { "quantity": 10000, "unit_price": "0.0022", "currency": "USD" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    },
+    {
+      "mpn": "RC0603FR-0710KLTR",
+      "manufacturer": "Yageo",
+      "category": "resistor",
+      "parameters": {
+        "resistance": { "value": "10000", "unit": "ohm", "raw_text": "10.0k", "source": "datasheet" },
+        "tolerance_pct": { "value": "1", "unit": "percent", "raw_text": "1%", "source": "datasheet" },
+        "power_rating": { "value": "0.1", "unit": "watt", "raw_text": "100mW", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "RESC1608X55N",
+        "mounting": "smt",
+        "pin_count": 2,
+        "length_mm": "1.6",
+        "width_mm": "0.8",
+        "height_mm": "0.55",
+        "raw_text": "0603"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs", "reach"],
+      "skus": [
+        {
+          "sku": "YAG-RC0603FR-0710KL-TR",
+          "packaging": "reel",
+          "stock": 1200000,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.0098", "currency": "USD" },
+            { "quantity": 1000, "unit_price": "0.0034", "currency": "USD" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    },
+    {
+      "mpn": "RC0805FR-0710KL",
+      "manufacturer": "Yageo",
+      "category": "resistor",
+      "parameters": {
+        "resistance": { "value": "10000", "unit": "ohm", "raw_text": "10.0k", "source": "datasheet" },
+        "tolerance_pct": { "value": "1", "unit": "percent", "raw_text": "1%", "source": "datasheet" },
+        "power_rating": { "value": "0.125", "unit": "watt", "raw_text": "125mW", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "RESC2012X70N",
+        "mounting": "smt",
+        "pin_count": 2,
+        "length_mm": "2.0",
+        "width_mm": "1.25",
+        "height_mm": "0.7",
+        "raw_text": "0805"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs", "reach"],
+      "skus": [
+        {
+          "sku": "YAG-RC0805FR-0710KL",
+          "packaging": "cut_tape",
+          "stock": 300000,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.0090", "currency": "USD" },
+            { "quantity": 1000, "unit_price": "0.0032", "currency": "USD" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    },
+    {
+      "mpn": "RC0402FR-074K7L",
+      "manufacturer": "Yageo",
+      "category": "resistor",
+      "parameters": {
+        "resistance": { "value": "4700", "unit": "ohm", "raw_text": "4.7k", "source": "datasheet" },
+        "tolerance_pct": { "value": "1", "unit": "percent", "raw_text": "1%", "source": "datasheet" },
+        "power_rating": { "value": "0.0625", "unit": "watt", "raw_text": "1/16W", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "RESC1005X40N",
+        "mounting": "smt",
+        "pin_count": 2,
+        "length_mm": "1.0",
+        "width_mm": "0.5",
+        "height_mm": "0.4",
+        "raw_text": "0402"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs", "reach"],
+      "skus": [
+        {
+          "sku": "YAG-RC0402FR-074K7L",
+          "packaging": "cut_tape",
+          "stock": 600000,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.0095", "currency": "USD" },
+            { "quantity": 1000, "unit_price": "0.0033", "currency": "USD" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    },
+    {
+      "mpn": "ERJ-2RKF4701X",
+      "manufacturer": "Panasonic",
+      "category": "resistor",
+      "parameters": {
+        "resistance": { "value": "4700", "unit": "ohm", "raw_text": "4.7k", "source": "datasheet" },
+        "tolerance_pct": { "value": "1", "unit": "percent", "raw_text": "1%", "source": "datasheet" },
+        "power_rating": { "value": "0.0625", "unit": "watt", "raw_text": "1/16W", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "RESC1005X40N",
+        "mounting": "smt",
+        "pin_count": 2,
+        "length_mm": "1.0",
+        "width_mm": "0.5",
+        "height_mm": "0.4",
+        "raw_text": "0402"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs", "reach"],
+      "skus": [
+        {
+          "sku": "PANA-ERJ2RKF4701X",
+          "packaging": "cut_tape",
+          "stock": 0,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.0210", "currency": "USD" },
+            { "quantity": 1000, "unit_price": "0.0090", "currency": "USD" }
+          ],
+          "lead_time_days": 84
+        }
+      ]
+    },
+    {
+      "mpn": "RC0805FR-074K7L",
+      "manufacturer": "Yageo",
+      "category": "resistor",
+      "parameters": {
+        "resistance": { "value": "4700", "unit": "ohm", "raw_text": "4.7k", "source": "datasheet" },
+        "tolerance_pct": { "value": "1", "unit": "percent", "raw_text": "1%", "source": "datasheet" },
+        "power_rating": { "value": "0.125", "unit": "watt", "raw_text": "125mW", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "RESC2012X70N",
+        "mounting": "smt",
+        "pin_count": 2,
+        "length_mm": "2.0",
+        "width_mm": "1.25",
+        "height_mm": "0.7",
+        "raw_text": "0805"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs", "reach"],
+      "skus": [
+        {
+          "sku": "YAG-RC0805FR-074K7L",
+          "packaging": "cut_tape",
+          "stock": 250000,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.0088", "currency": "USD" },
+            { "quantity": 1000, "unit_price": "0.0030", "currency": "USD" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    },
+    {
+      "mpn": "GRM155R71C104KA88D",
+      "manufacturer": "MURATA MANUFACTURING",
+      "category": "capacitor",
+      "parameters": {
+        "capacitance": { "value": "1E-7", "unit": "farad", "raw_text": "100nF", "source": "datasheet" },
+        "tolerance_pct": { "value": "10", "unit": "percent", "raw_text": "\u00b110%", "source": "datasheet" },
+        "voltage_rating": { "value": "16", "unit": "volt", "raw_text": "16V", "source": "datasheet" },
+        "dielectric": { "value": null, "unit": "class", "raw_text": "X7R", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "CAPC1005X55N",
+        "mounting": "smt",
+        "pin_count": 2,
+        "length_mm": "1.0",
+        "width_mm": "0.5",
+        "height_mm": "0.55",
+        "raw_text": "0402"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs", "reach"],
+      "skus": [
+        {
+          "sku": "MUR-GRM155R71C104KA88D",
+          "packaging": "cut_tape",
+          "stock": 2000000,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.0075", "currency": "USD" },
+            { "quantity": 1000, "unit_price": "0.0021", "currency": "USD" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    },
+    {
+      "mpn": "C0402C104K4RACTU",
+      "manufacturer": "Kemet Electronics Corporation",
+      "category": "capacitor",
+      "parameters": {
+        "capacitance": { "value": "1E-7", "unit": "farad", "raw_text": "100nF", "source": "datasheet" },
+        "tolerance_pct": { "value": "10", "unit": "percent", "raw_text": "\u00b110%", "source": "datasheet" },
+        "voltage_rating": { "value": "16", "unit": "volt", "raw_text": "16V", "source": "datasheet" },
+        "dielectric": { "value": null, "unit": "class", "raw_text": "X7R", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "CAPC1005X55N",
+        "mounting": "smt",
+        "pin_count": 2,
+        "length_mm": "1.0",
+        "width_mm": "0.5",
+        "height_mm": "0.55",
+        "raw_text": "0402"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs", "reach"],
+      "skus": [
+        {
+          "sku": "KEM-C0402C104K4RACTU",
+          "packaging": "cut_tape",
+          "stock": 150000,
+          "moq": null,
+          "spq": null,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.0120", "currency": "USD" },
+            { "quantity": 1000, "unit_price": "0.0045", "currency": "USD" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    },
+    {
+      "mpn": "0402YC104KAT2A",
+      "manufacturer": "AVX",
+      "category": "capacitor",
+      "parameters": {
+        "capacitance": { "value": "1E-7", "unit": "farad", "raw_text": "100nF", "source": "datasheet" },
+        "tolerance_pct": { "value": "10", "unit": "percent", "raw_text": "\u00b110%", "source": "datasheet" },
+        "voltage_rating": { "value": "16", "unit": "volt", "raw_text": "16V", "source": "datasheet" },
+        "dielectric": { "value": null, "unit": "class", "raw_text": "X7R", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "CAPC1005X55N",
+        "mounting": "smt",
+        "pin_count": 2,
+        "length_mm": "1.0",
+        "width_mm": "0.5",
+        "height_mm": "0.55",
+        "raw_text": "0402"
+      },
+      "lifecycle": "nrnd",
+      "compliance": ["rohs", "reach"],
+      "skus": [
+        {
+          "sku": "AVX-0402YC104KAT2A",
+          "packaging": "cut_tape",
+          "stock": 5000,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.0130", "currency": "USD" },
+            { "quantity": 1000, "unit_price": "0.0050", "currency": "USD" }
+          ],
+          "lead_time_days": 120
+        }
+      ]
+    },
+    {
+      "mpn": "GRM188R71C104KA01D",
+      "manufacturer": "Murata",
+      "category": "capacitor",
+      "parameters": {
+        "capacitance": { "value": "1E-7", "unit": "farad", "raw_text": "0.1uF", "source": "datasheet" },
+        "tolerance_pct": { "value": "10", "unit": "percent", "raw_text": "\u00b110%", "source": "datasheet" },
+        "voltage_rating": { "value": "16", "unit": "volt", "raw_text": "16V", "source": "datasheet" },
+        "dielectric": { "value": null, "unit": "class", "raw_text": "X7R", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "CAPC1608X90N",
+        "mounting": "smt",
+        "pin_count": 2,
+        "length_mm": "1.6",
+        "width_mm": "0.8",
+        "height_mm": "0.9",
+        "raw_text": "0603"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs", "reach"],
+      "skus": [
+        {
+          "sku": "MUR-GRM188R71C104KA01D",
+          "packaging": "cut_tape",
+          "stock": 1800000,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.0082", "currency": "USD" },
+            { "quantity": 1000, "unit_price": "0.0025", "currency": "USD" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    },
+    {
+      "mpn": "CL10B104KB8NNNC",
+      "manufacturer": "Samsung Electro-Mechanics",
+      "category": "capacitor",
+      "parameters": {
+        "capacitance": { "value": "1E-7", "unit": "farad", "raw_text": "0.1uF", "source": "datasheet" },
+        "tolerance_pct": { "value": "10", "unit": "percent", "raw_text": "\u00b110%", "source": "datasheet" },
+        "voltage_rating": { "value": "16", "unit": "volt", "raw_text": "16V", "source": "datasheet" },
+        "dielectric": { "value": null, "unit": "class", "raw_text": "X7R", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "CAPC1608X90N",
+        "mounting": "smt",
+        "pin_count": 2,
+        "length_mm": "1.6",
+        "width_mm": "0.8",
+        "height_mm": "0.9",
+        "raw_text": "0603"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs", "reach"],
+      "skus": [
+        {
+          "sku": "SEM-CL10B104KB8NNNC",
+          "packaging": "cut_tape",
+          "stock": 900000,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.0079", "currency": "USD" },
+            { "quantity": 1000, "unit_price": "0.0023", "currency": "USD" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    },
+    {
+      "mpn": "GRM21BR61C106KE15L",
+      "manufacturer": "Murata",
+      "category": "capacitor",
+      "parameters": {
+        "capacitance": { "value": "1E-5", "unit": "farad", "raw_text": "10uF", "source": "datasheet" },
+        "tolerance_pct": { "value": "10", "unit": "percent", "raw_text": "\u00b110%", "source": "datasheet" },
+        "voltage_rating": { "value": "16", "unit": "volt", "raw_text": "16V", "source": "datasheet" },
+        "dielectric": { "value": null, "unit": "class", "raw_text": "X5R", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "CAPC2012X125N",
+        "mounting": "smt",
+        "pin_count": 2,
+        "length_mm": "2.0",
+        "width_mm": "1.25",
+        "height_mm": "1.25",
+        "raw_text": "0805"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs", "reach"],
+      "skus": [
+        {
+          "sku": "MUR-GRM21BR61C106KE15L",
+          "packaging": "cut_tape",
+          "stock": 400000,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.0350", "currency": "USD" },
+            { "quantity": 1000, "unit_price": "0.0140", "currency": "USD" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    },
+    {
+      "mpn": "CL21A106KOQNNNG",
+      "manufacturer": "Samsung Electro-Mechanics",
+      "category": "capacitor",
+      "parameters": {
+        "capacitance": { "value": "1E-5", "unit": "farad", "raw_text": "10uF", "source": "datasheet" },
+        "tolerance_pct": { "value": "10", "unit": "percent", "raw_text": "\u00b110%", "source": "datasheet" },
+        "voltage_rating": { "value": "16", "unit": "volt", "raw_text": "16V", "source": "datasheet" },
+        "dielectric": { "value": null, "unit": "class", "raw_text": "X5R", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "CAPC2012X125N",
+        "mounting": "smt",
+        "pin_count": 2,
+        "length_mm": "2.0",
+        "width_mm": "1.25",
+        "height_mm": "1.25",
+        "raw_text": "0805"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs", "reach"],
+      "skus": [
+        {
+          "sku": "SEM-CL21A106KOQNNNG",
+          "packaging": "cut_tape",
+          "stock": 220000,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.0410", "currency": "USD" },
+            { "quantity": 1000, "unit_price": "0.0165", "currency": "USD" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    },
+    {
+      "mpn": "LM358DR",
+      "manufacturer": "TEXAS INSTRUMENTS",
+      "category": "ic_analog",
+      "parameters": {
+        "supply_voltage": { "value": "5", "unit": "volt", "min": "3", "max": "32", "raw_text": "3V to 32V single supply", "source": "datasheet" },
+        "package_pin_count": { "value": "8", "unit": "count", "raw_text": "8-pin SOIC", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "SOIC127P600X175-8N",
+        "mounting": "smt",
+        "pin_count": 8,
+        "pitch_mm": "1.27",
+        "length_mm": "4.9",
+        "width_mm": "3.9",
+        "height_mm": "1.75",
+        "raw_text": "SOIC-8"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs", "reach"],
+      "skus": [
+        {
+          "sku": "TI-LM358DR",
+          "packaging": "reel",
+          "stock": 320000,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.4500", "currency": "USD" },
+            { "quantity": 1000, "unit_price": "0.1800", "currency": "USD" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    },
+    {
+      "mpn": "TS912AIDT",
+      "manufacturer": "STMicroelectronics",
+      "category": "ic_analog",
+      "parameters": {
+        "supply_voltage": { "value": "6", "unit": "volt", "min": "2.7", "max": "6", "raw_text": "2.7V to 6V", "source": "datasheet" },
+        "package_pin_count": { "value": "8", "unit": "count", "raw_text": "8-pin SOIC", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "SOIC127P600X175-8N",
+        "mounting": "smt",
+        "pin_count": 8,
+        "pitch_mm": "1.27",
+        "length_mm": "4.9",
+        "width_mm": "3.9",
+        "height_mm": "1.75",
+        "raw_text": "SOIC-8"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs"],
+      "skus": [
+        {
+          "sku": "STM-TS912AIDT",
+          "packaging": "reel",
+          "stock": 80000,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.3800", "currency": "USD" },
+            { "quantity": 1000, "unit_price": "0.1500", "currency": "USD" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    },
+    {
+      "mpn": "LM358P",
+      "manufacturer": "Texas Instruments",
+      "category": "ic_analog",
+      "parameters": {
+        "supply_voltage": { "value": "5", "unit": "volt", "min": "3", "max": "32", "raw_text": "3V to 32V single supply", "source": "datasheet" },
+        "package_pin_count": { "value": "8", "unit": "count", "raw_text": "8-pin PDIP", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "DIP002P1000X400-8N",
+        "mounting": "tht",
+        "pin_count": 8,
+        "pitch_mm": "2.54",
+        "length_mm": "9.8",
+        "width_mm": "6.35",
+        "height_mm": "4.0",
+        "raw_text": "PDIP-8"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs", "reach"],
+      "skus": [
+        {
+          "sku": "TI-LM358P",
+          "packaging": "tube",
+          "stock": 45000,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.5200", "currency": "USD" },
+            { "quantity": 1000, "unit_price": "0.2200", "currency": "USD" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    },
+    {
+      "mpn": "ABM3-16.000MHZ-D2Y-T",
+      "manufacturer": "Abracon LLC",
+      "category": "crystal",
+      "parameters": {
+        "frequency": { "value": "16000000", "unit": "hertz", "raw_text": "16MHz", "source": "datasheet" },
+        "load_capacitance": { "value": "1.8E-11", "unit": "farad", "raw_text": "18pF", "source": "datasheet" },
+        "frequency_tolerance_ppm": { "value": "10", "unit": "ppm", "raw_text": "\u00b110ppm", "source": "datasheet" },
+        "esr": { "value": "60", "unit": "ohm", "raw_text": "60\u03a9 max", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "XTAL3225-4N",
+        "mounting": "smt",
+        "pin_count": 4,
+        "length_mm": "3.2",
+        "width_mm": "2.5",
+        "height_mm": "0.8",
+        "raw_text": "3225 4-pin"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs", "reach"],
+      "skus": [
+        {
+          "sku": "ABR-ABM3-16.000MHZ-D2Y-T",
+          "packaging": "reel",
+          "stock": 75000,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.3200", "currency": "USD" },
+            { "quantity": 1000, "unit_price": "0.1400", "currency": "USD" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    },
+    {
+      "mpn": "NX3225GA-16.000MHZ-STD-CRG-1",
+      "manufacturer": "NDK",
+      "category": "crystal",
+      "parameters": {
+        "frequency": { "value": "16000000", "unit": "hertz", "raw_text": "16MHz", "source": "datasheet" },
+        "load_capacitance": { "value": "2.0E-11", "unit": "farad", "raw_text": "20pF", "source": "datasheet" },
+        "frequency_tolerance_ppm": { "value": "20", "unit": "ppm", "raw_text": "\u00b120ppm", "source": "datasheet" },
+        "esr": { "value": "50", "unit": "ohm", "raw_text": "50\u03a9 max", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "XTAL3225-4N",
+        "mounting": "smt",
+        "pin_count": 4,
+        "length_mm": "3.2",
+        "width_mm": "2.5",
+        "height_mm": "0.8",
+        "raw_text": "3225 4-pin"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs", "reach"],
+      "skus": [
+        {
+          "sku": "NDK-NX3225GA-16MHZ",
+          "packaging": "reel",
+          "stock": 60000,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.4100", "currency": "USD" },
+            { "quantity": 1000, "unit_price": "0.1700", "currency": "USD" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    },
+    {
+      "mpn": "ABM3-16.000MHZ-D2Y-T",
+      "manufacturer": "ECS Inc",
+      "category": "crystal",
+      "parameters": {
+        "frequency": { "value": "16000000", "unit": "hertz", "raw_text": "16MHz", "source": "datasheet" },
+        "load_capacitance": { "value": "1.2E-11", "unit": "farad", "raw_text": "12pF", "source": "datasheet" },
+        "frequency_tolerance_ppm": { "value": "30", "unit": "ppm", "raw_text": "\u00b130ppm", "source": "datasheet" },
+        "esr": { "value": "80", "unit": "ohm", "raw_text": "80\u03a9 max", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "XTAL3225-4N",
+        "mounting": "smt",
+        "pin_count": 4,
+        "length_mm": "3.2",
+        "width_mm": "2.5",
+        "height_mm": "0.8",
+        "raw_text": "3225 4-pin"
+      },
+      "lifecycle": "obsolete",
+      "compliance": ["rohs"],
+      "skus": [
+        {
+          "sku": "ECS-ABM3-16MHZ-D2Y-T-OLD",
+          "packaging": "tray",
+          "stock": 150,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.9500", "currency": "USD" }
+          ],
+          "lead_time_days": 180
+        }
+      ]
+    },
+    {
+      "mpn": "61300411121",
+      "manufacturer": "WURTH ELEKTRONIK",
+      "category": "connector",
+      "parameters": {
+        "pin_count": { "value": "4", "unit": "count", "raw_text": "4-pin", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "HDR254-1X4-THT",
+        "mounting": "tht",
+        "pin_count": 4,
+        "pitch_mm": "2.54",
+        "length_mm": "10.16",
+        "width_mm": "2.54",
+        "height_mm": "8.5",
+        "raw_text": "1x04 2.54mm THT header"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs", "reach"],
+      "skus": [
+        {
+          "sku": "WE-61300411121",
+          "packaging": "tray",
+          "stock": 45000,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.1200", "currency": "EUR" },
+            { "quantity": 1000, "unit_price": "0.0450", "currency": "EUR" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    },
+    {
+      "mpn": "22-23-2041",
+      "manufacturer": "Molex",
+      "category": "connector",
+      "parameters": {
+        "pin_count": { "value": "4", "unit": "count", "raw_text": "4-pin", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "HDR254-1X4-THT",
+        "mounting": "tht",
+        "pin_count": 4,
+        "pitch_mm": "2.54",
+        "length_mm": "10.16",
+        "width_mm": "2.54",
+        "height_mm": "8.5",
+        "raw_text": "1x04 2.54mm THT header"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs", "reach"],
+      "skus": [
+        {
+          "sku": "MOLEX-22-23-2041",
+          "packaging": "tray",
+          "stock": 60000,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.1500", "currency": "USD" },
+            { "quantity": 1000, "unit_price": "0.0600", "currency": "USD" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    }
+  ]
+}

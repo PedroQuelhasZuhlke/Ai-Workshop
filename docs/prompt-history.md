@@ -22,3 +22,11 @@ With that in mind, discuss the implementation steps with me and start create res
 - update the agents that make sense to subagents so they can be called inside the prompts
 
 - /roadmap-m2-normalize-classify
+
+- /roadmap-m3-policy
+
+- append an evidence summary of this whole conversation and store it in the #attachment:decision-log.md
+
+- /roadmap-m4-sourcing-fixtures
+
+- append an evidence summary of this whole conversation and store it in the #attachment:decision-log.md

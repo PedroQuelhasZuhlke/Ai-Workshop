@@ -1,0 +1,257 @@
+{
+  "snapshot_id": "snap-adapter-contract-test-001",
+  "supplier": "fixture",
+  "fetched_at": "2026-01-15T00:00:00Z",
+  "parts": [
+    {
+      "mpn": "RC0603FR-0710KL",
+      "manufacturer": "YAGEO",
+      "category": "resistor",
+      "parameters": {
+        "resistance": { "value": "10000", "unit": "ohm", "tolerance_pct": "1", "raw_text": "10k", "source": "datasheet" },
+        "tolerance_pct": { "value": "1", "unit": "percent", "raw_text": "±1%", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "0603",
+        "mounting": "smt",
+        "pin_count": 2,
+        "length_mm": "1.6",
+        "width_mm": "0.8",
+        "raw_text": "0603"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs", "reach"],
+      "skus": [
+        {
+          "sku": "YAG-10K-0603-CT",
+          "packaging": "cut_tape",
+          "stock": 0,
+          "moq": 1,
+          "spq": 1000,
+          "price_breaks": [
+            { "quantity": 1000, "unit_price": "0.0031", "currency": "USD" },
+            { "quantity": 10000, "unit_price": "0.0022", "currency": "USD" }
+          ],
+          "lead_time_days": 45
+        }
+      ]
+    },
+    {
+      "mpn": "RC0603FR-0710K1",
+      "manufacturer": "Yageo",
+      "category": "resistor",
+      "parameters": {
+        "resistance": { "value": "4700", "unit": "ohm", "tolerance_pct": "1", "raw_text": "4k7", "source": "datasheet" },
+        "tolerance_pct": { "value": "1", "unit": "percent", "raw_text": "±1%", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "0603",
+        "mounting": "smt",
+        "pin_count": 2,
+        "length_mm": "1.6",
+        "width_mm": "0.8",
+        "raw_text": "0603"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs"],
+      "skus": [
+        {
+          "sku": "YAG-4K7-0603-NOMOQ",
+          "packaging": "cut_tape",
+          "stock": 500,
+          "moq": null,
+          "spq": null,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.0042", "currency": "USD" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    },
+    {
+      "mpn": "GRM188R71H104KA93D",
+      "manufacturer": "MURATA MANUFACTURING",
+      "category": "capacitor",
+      "parameters": {
+        "capacitance": { "value": "1E-7", "unit": "farad", "raw_text": "100nF", "source": "datasheet" },
+        "voltage_rating": { "value": "50", "unit": "volt", "raw_text": "50V", "source": "datasheet" },
+        "dielectric": { "value": null, "unit": "class", "raw_text": "X7R", "source": "datasheet" },
+        "tolerance_pct": { "value": "10", "unit": "percent", "raw_text": "±10%", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "0603",
+        "mounting": "smt",
+        "pin_count": 2,
+        "length_mm": "1.6",
+        "width_mm": "0.8",
+        "raw_text": "0603"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs", "reach"],
+      "skus": [
+        {
+          "sku": "MUR-100N-0603-EUR",
+          "packaging": "reel",
+          "stock": 20000,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.0089", "currency": "EUR" },
+            { "quantity": 1000, "unit_price": "0.0065", "currency": "EUR" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    },
+    {
+      "mpn": "MPN-NRND-001",
+      "manufacturer": "Abracon",
+      "category": "inductor",
+      "parameters": {
+        "inductance": { "value": "1E-6", "unit": "henry", "raw_text": "1uH", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "0402",
+        "mounting": "smt",
+        "pin_count": 2,
+        "raw_text": "0402"
+      },
+      "lifecycle": "nrnd",
+      "compliance": ["rohs"],
+      "skus": [
+        {
+          "sku": "ABR-1UH-0402-NRND",
+          "packaging": "cut_tape",
+          "stock": 300,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.015", "currency": "USD" }
+          ],
+          "lead_time_days": 90
+        }
+      ]
+    },
+    {
+      "mpn": "MPN-OBSOLETE-001",
+      "manufacturer": "VISHAY INTERTECHNOLOGY",
+      "category": "crystal",
+      "parameters": {
+        "frequency": { "value": "16000000", "unit": "hertz", "raw_text": "16MHz", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "HC-49",
+        "mounting": "tht",
+        "raw_text": "HC-49/US"
+      },
+      "lifecycle": "obsolete",
+      "compliance": [],
+      "skus": [
+        {
+          "sku": "VIS-16MHZ-OBS",
+          "packaging": "tube",
+          "stock": null,
+          "moq": 10,
+          "spq": 10,
+          "price_breaks": [
+            { "quantity": 10, "unit_price": "0.45", "currency": "USD" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    },
+    {
+      "mpn": "MPN-DUAL-SOURCE",
+      "manufacturer": "Littelfuse",
+      "category": "diode",
+      "parameters": {
+        "reverse_voltage": { "value": "100", "unit": "volt", "raw_text": "100V", "source": "datasheet" },
+        "forward_current": { "value": "1", "unit": "ampere", "raw_text": "1A", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "SOD-123",
+        "mounting": "smt",
+        "pin_count": 2,
+        "raw_text": "SOD-123"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs"],
+      "skus": [
+        {
+          "sku": "LF-DUAL-001",
+          "packaging": "cut_tape",
+          "stock": 5000,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.02", "currency": "USD" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    },
+    {
+      "mpn": "MPN-DUAL-SOURCE",
+      "manufacturer": "Bel Fuse Inc.",
+      "category": "diode",
+      "parameters": {
+        "reverse_voltage": { "value": "100", "unit": "volt", "raw_text": "100V", "source": "datasheet" },
+        "forward_current": { "value": "1", "unit": "ampere", "raw_text": "1A", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "SOD-123",
+        "mounting": "smt",
+        "pin_count": 2,
+        "raw_text": "SOD-123"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs"],
+      "skus": [
+        {
+          "sku": "BF-DUAL-001",
+          "packaging": "cut_tape",
+          "stock": 800,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.025", "currency": "USD" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    },
+    {
+      "mpn": "RC0805FR-0710KL",
+      "manufacturer": "Yageo",
+      "category": "resistor",
+      "parameters": {
+        "resistance": { "value": "10000", "unit": "ohm", "tolerance_pct": "1", "raw_text": "10k", "source": "datasheet" },
+        "tolerance_pct": { "value": "1", "unit": "percent", "raw_text": "±1%", "source": "datasheet" }
+      },
+      "footprint": {
+        "package_code": "0805",
+        "mounting": "smt",
+        "pin_count": 2,
+        "length_mm": "2.0",
+        "width_mm": "1.25",
+        "raw_text": "0805"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs", "reach"],
+      "skus": [
+        {
+          "sku": "YAG-10K-0805",
+          "packaging": "cut_tape",
+          "stock": 10000,
+          "moq": 1,
+          "spq": 1,
+          "price_breaks": [
+            { "quantity": 1, "unit_price": "0.003", "currency": "USD" },
+            { "quantity": 1000, "unit_price": "0.0018", "currency": "USD" }
+          ],
+          "lead_time_days": null
+        }
+      ]
+    }
+  ]
+}
