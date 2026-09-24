@@ -35,6 +35,7 @@ from pcbpick.contracts.requirement import NormalizedRequirement
 from pcbpick.exporters.stage import ExportedFile, ExportStage, ExportStageInput
 from pcbpick.ingest.stage import IngestInput, IngestStage
 from pcbpick.llm.client import LLMClient
+from pcbpick.llm.ollama_client import OllamaLLMClient
 from pcbpick.normalize.stage import NormalizeStage
 from pcbpick.pipeline.context import PipelineConfig, StageContext
 from pcbpick.pipeline.results import StageIssue, StageResult
@@ -52,9 +53,35 @@ from pcbpick.sourcing.suppliers.protocol import SupplierAdapter
 _LIVE_SUPPLIERS_ENV_VAR = "PCBPICK_USE_LIVE_SUPPLIERS"
 _DEFAULT_SNAPSHOT_ROOT = Path("runs/snapshots")
 
+_USE_LLM_ENV_VAR = "PCBPICK_USE_LLM"
+_OLLAMA_MODEL_ENV_VAR = "PCBPICK_OLLAMA_MODEL"
+_OLLAMA_BASE_URL_ENV_VAR = "PCBPICK_OLLAMA_BASE_URL"
+_DEFAULT_OLLAMA_MODEL = "llama3.1"
+
 
 def make_stage_context(run_id: str, now: datetime) -> StageContext:
     return StageContext(run_id=run_id, now=now, rng=Random(run_id), config=PipelineConfig())
+
+
+def default_llm_client(*, use_llm: bool | None = None) -> LLMClient | None:
+    """`None` by default, matching the M1 no-LLM-client precedent.
+
+    Pass `use_llm=True`, or set `PCBPICK_USE_LLM=1`, to route the two sanctioned LLM
+    call sites (`normalize_fallback`, `candidate_rationale`) through a local Ollama
+    server instead — every existing caller that doesn't opt in keeps the exact same
+    graceful-degradation behavior. `PCBPICK_OLLAMA_MODEL`/`PCBPICK_OLLAMA_BASE_URL`
+    override the model id and server address; neither is required for tests, which
+    never set `PCBPICK_USE_LLM` and so never reach Ollama.
+    """
+    llm_enabled = use_llm
+    if llm_enabled is None:
+        llm_enabled = os.environ.get(_USE_LLM_ENV_VAR, "").strip().lower() in {"1", "true", "yes"}
+    if not llm_enabled:
+        return None
+    return OllamaLLMClient(
+        model_id=os.environ.get(_OLLAMA_MODEL_ENV_VAR, _DEFAULT_OLLAMA_MODEL),
+        base_url=os.environ.get(_OLLAMA_BASE_URL_ENV_VAR, "http://localhost:11434"),
+    )
 
 
 def default_adapters(

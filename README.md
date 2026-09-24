@@ -145,6 +145,49 @@ npm run dev
 The web app runs on `http://localhost:5173` and expects the API at
 `http://localhost:8000` (allowed via CORS by default).
 
+Or start everything together with LLM assistance enabled in one step:
+
+```powershell
+./scripts/start-dev.ps1
+```
+
+This starts Ollama and its [Open WebUI](https://github.com/open-webui/open-webui)
+management UI in Docker (`docker compose up -d ollama open-webui`, pulling the model
+into the container on first run), then opens the backend and frontend each in their
+own window with `PCBPICK_USE_LLM=1` set. Requires Docker Desktop (or another Docker
+engine) to be installed and running; if `docker` isn't found, it's skipped and the
+LLM-assisted stages degrade gracefully as usual. Open WebUI is available afterward at
+`http://localhost:3000` for browsing/pulling models and chatting with them directly.
+
+### Optional: LLM-assisted normalize/evaluate
+
+The two sanctioned LLM call sites (`normalize_fallback`, `candidate_rationale`, see
+[.github/instructions/llm-calls.instructions.md](.github/instructions/llm-calls.instructions.md))
+have no client configured by default — those stages degrade gracefully (an `INFO` or
+`BLOCKING` issue, never a crash) instead of calling a model. To enable them locally
+against a free, no-API-key [Ollama](https://ollama.com) server, `./scripts/start-dev.ps1`
+does this for you (see above). To do it by hand instead:
+
+```powershell
+# once: start Ollama (+ Open WebUI) in Docker and pull a model into the container
+docker compose up -d ollama open-webui
+docker exec pcbpick-ollama ollama pull llama3.1
+
+# set before starting the API
+$env:PCBPICK_USE_LLM = "1"
+uv run uvicorn pcbpick.api.app:app --reload
+```
+
+No Docker? Install [Ollama](https://ollama.com) locally instead (`ollama pull
+llama3.1`) — the backend also auto-starts a local `ollama serve` if it finds the
+executable on `PATH` and nothing is already listening on `PCBPICK_OLLAMA_BASE_URL`.
+
+`PCBPICK_OLLAMA_MODEL` (default `llama3.1`) and `PCBPICK_OLLAMA_BASE_URL` (default
+`http://localhost:11434`) override the model and server address. Never set
+`PCBPICK_USE_LLM` in tests — it would add a live network call, which
+[.github/instructions/testing.instructions.md](.github/instructions/testing.instructions.md)
+forbids.
+
 ## Testing
 
 ```powershell

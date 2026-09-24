@@ -58,3 +58,31 @@ exporters) exist as modules with their own tests but are not yet chained into th
 end-to-end run."
 
 what is missing?
+
+- create me a prompt that runs the setup for the project mentioned in this readme
+
+- review the prompt because there are deprecated tools.
+Also, check if UV is installed. it is worth installing if not present
+
+- /setup-project
+
+- what does "normalize_fallback did not produce a usable result: no LLM client configured" mean
+
+- how can I pass the real client and where is that stated in the readme file?
+
+- before you do that, what is my best option? I have github copilot subscription. But none other
+
+- yes, go with Ollama
+
+- did you update the code to use the ollama llm? I still see the api key option in the login.
+Can you also ensure Ollama is running when starting the project and start it if it is not?
+
+- create a startup script that sets the env var, and launches both backend and frontend
+
+- I want ollama to run in a docker image, and to be started as part of the startup script
+
+- is there a management ui for ollama
+
+- can you aslo install that as part of the start script
+
+- write all the prompts I used to #attachment:prompt-history.md 

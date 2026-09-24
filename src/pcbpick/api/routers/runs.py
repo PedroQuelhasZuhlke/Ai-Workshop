@@ -222,7 +222,9 @@ def confirm_mapping(
     reingested = orchestrator.run_ingest(run.source_filename, content, confirmed, ctx)
     artifact_store.save_ingest_result(run_dir, reingested.output, reingested.issues)
 
-    requirements_result = orchestrator.run_normalize(reingested.output, None, ctx)
+    requirements_result = orchestrator.run_normalize(
+        reingested.output, orchestrator.default_llm_client(), ctx
+    )
     artifact_store.save_requirements(
         run_dir, requirements_result.output, requirements_result.issues
     )
@@ -346,7 +348,9 @@ def source_candidates(
 
     adapters = orchestrator.default_adapters(settings.catalog_snapshot_paths)
     ctx = orchestrator.make_stage_context(run_id, _stage_now(settings))
-    chain_result = orchestrator.run_sourcing_chain(requirements, adapters, None, ctx)
+    chain_result = orchestrator.run_sourcing_chain(
+        requirements, adapters, orchestrator.default_llm_client(), ctx
+    )
 
     artifact_store.save_candidates(run_dir, chain_result.candidates, chain_result.issues)
     run.status = "sourced"
@@ -445,7 +449,9 @@ def revalidate_plans(
 
     adapters = orchestrator.default_adapters(settings.catalog_snapshot_paths)
     ctx = orchestrator.make_stage_context(run_id, _stage_now(settings))
-    chain_result = orchestrator.run_sourcing_chain(requirements, adapters, None, ctx)
+    chain_result = orchestrator.run_sourcing_chain(
+        requirements, adapters, orchestrator.default_llm_client(), ctx
+    )
     artifact_store.save_candidates(run_dir, chain_result.candidates, chain_result.issues)
 
     requirements_by_id = {r.requirement_id: r for r in requirements}
