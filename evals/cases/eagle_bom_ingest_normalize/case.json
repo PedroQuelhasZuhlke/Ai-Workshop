@@ -1,0 +1,32 @@
+{
+  "case_id": "eagle_bom_ingest_normalize",
+  "description": "Runs the real ingest -> normalize chain against fixtures/boms/eagle_bom.csv (Part/Value/Device/Package/Description columns -- the Eagle/Fusion default one-row-per-designator export, no Quantity column). 7 of 8 rows are guaranteed unresolved for the same structural reason as the other three exports; U1 is the interesting exception -- its Description ('Dual Op-Amp', HYPHENATED) matches the same `\\bop-?amp\\b` regex that altium_bom's spaced 'Op Amp' misses, so U1 likely classifies as ic_analog (which has no required parameters) rather than landing on 'category' unresolved. That one row is deliberately left unscored (not a guaranteed bound) because it also depends on Package 'SO8' resolving as a known SOIC-family footprint, which was not independently traced.",
+  "chain": ["ingest", "normalize"],
+  "inputs": {
+    "bom_file": "fixtures/boms/eagle_bom.csv"
+  },
+  "not_extended_to": [
+    "expand/source/policy/evaluate/plan/export -- no fixtures/catalogs/ snapshot exists for eagle_bom.csv's parts, and none of the confidently-scored rows resolve fully anyway."
+  ],
+  "expect": {
+    "normalized_rows": 8,
+    "dnp_excluded": 0,
+    "unresolved_min": 7,
+    "unresolved_field_counts_guaranteed": {
+      "parameters.tolerance_pct": 3,
+      "parameters.voltage_rating": 2,
+      "parameters.dielectric": 2,
+      "parameters.pin_count": 1,
+      "parameters.forward_voltage": 1,
+      "parameters.forward_current": 1
+    },
+    "category_counts_guaranteed": {
+      "resistor": 3,
+      "capacitor": 2,
+      "connector": 1,
+      "led": 1
+    },
+    "requirements_sourced": 0
+  },
+  "hand_verified_reasoning": "eagle_bom.csv (Part,Value,Device,Package,Description) rows, row_index per eagle_bom.expected.json:\n- rows 0,1,2 (R1 '10k', R2 '10k', R3 '4k7', all Device='RESISTOR', Description='Resistor'): refdes 'R' -> RESISTOR confident. resistance parses from each Value. No '%' anywhere -> guaranteed parameters.tolerance_pct for each of the 3 rows.\n- rows 3,4 (C1 '100n', C2 '1uF', Device='CAPACITOR', Description='Capacitor'): refdes 'C' -> CAPACITOR confident. capacitance parses. No voltage/dielectric stated -> guaranteed parameters.voltage_rating + parameters.dielectric for each of the 2 rows.\n- row 5 (U1, Value empty, Device='LM358', Description='Dual Op-Amp', refdes 'U' ambiguous): 'description' target maps to the Description column ('Dual Op-Amp'). classify/router.py's IC_ANALOG pattern `\\bop-?amp\\b` matches a literal hyphen between 'op' and 'amp' (case-insensitive) -- 'Op-Amp' in 'Dual Op-Amp' has exactly that hyphen -> matches -> category=IC_ANALOG, confident=True (hint_category's 'resolved from description keyword' branch, since from_prefix is None for 'U'). ic_analog has zero required parameters (categories.py) -- so IF the Package 'SO8' also resolves as a recognized footprint (not independently traced in this pass, hence NOT asserted here), this row's unresolved could legitimately be []. Deliberately excluded from every guaranteed-unresolved tally above.\n- row 6 (J1, Value empty, Device='PINHD-1X4', Description='Header 4-pin'): refdes 'J' -> CONNECTOR confident, independent of description. No pin_count-populating code path -> guaranteed parameters.pin_count.\n- row 7 (D1, Value='LED', Device='LED5MM', Description='LED Red 5mm'): refdes 'D' -> DIODE from prefix, description keyword 'led' specializes to LED (hint_category's documented disagreement-resolution case), confident=True. Neither forward_voltage nor forward_current is stated -> guaranteed parameters.forward_voltage + parameters.forward_current.\nTally: rows 0,1,2,3,4,6,7 are guaranteed unresolved (7 of 8); row 5 is the sole row not asserted either way -> unresolved_min=7 (not 8, since row 5's outcome is genuinely uncertain from this pass's analysis alone). category_counts_guaranteed covers only the 7 confidently-classified rows: resistor={0,1,2}=3, capacitor={3,4}=2, connector={6}=1, led={7}=1; row 5 (U1, likely ic_analog) is deliberately omitted from this map since its category, while probably IC_ANALOG per the regex analysis above, is reported here as a documented observation rather than a scored expectation."
+}

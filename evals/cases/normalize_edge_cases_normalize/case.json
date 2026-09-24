@@ -1,0 +1,48 @@
+{
+  "case_id": "normalize_edge_cases_normalize",
+  "description": "Re-tallies (independently, from the raw fixture bytes -- not merely re-stating) fixtures/boms/normalize_edge_cases.csv + its already-hand-verified normalize_edge_cases.expected.json, the M2 edge-case suite covering RKM notation traps (R47 vs 4R7 vs 1M-on-a-resistor vs 1M-on-a-capacitor), 3-digit capacitor codes (bare '104', '225K', '225Z' asymmetric tolerance), a resistor/capacitor code-collision ambiguity ('103K'), an unrecognized package code, a bare package with no stated dimension system, conflicting RoHS/non-RoHS compliance tokens in one description, three unicode micro-sign spellings of the same value, a fuse and a Y2 capacitor (both must classify criticality=safety), and one row requiring the normalize_fallback LLM call site. This case's `expect` block is an aggregate scored view of that fixture's per-row oracle -- proof that the aggregate arithmetic itself is correct, independent of and in addition to per-row assertions.",
+  "chain": ["ingest", "normalize"],
+  "inputs": {
+    "bom_file": "fixtures/boms/normalize_edge_cases.csv"
+  },
+  "not_extended_to": [
+    "expand/source/policy/evaluate/plan/export -- no fixtures/catalogs/ snapshot exists for this fixture's parts (it has none: MPN/Manufacturer columns are absent from its header entirely), and it exists purely to exercise normalize."
+  ],
+  "expect": {
+    "normalized_rows": 19,
+    "dnp_excluded": 0,
+    "unresolved_min": 9,
+    "unresolved_max": 9,
+    "category_counts": {
+      "resistor": 7,
+      "capacitor": 8,
+      "module": 1,
+      "ic_digital": 1,
+      "fuse": 1,
+      "unknown": 1
+    },
+    "confidence_tier_counts": {
+      "high": 10,
+      "medium": 0,
+      "low": 9
+    },
+    "criticality_counts": {
+      "standard": 17,
+      "safety": 2
+    },
+    "unresolved_field_counts": {
+      "parameters.capacitance": 2,
+      "parameters.voltage_rating": 2,
+      "parameters.dielectric": 3,
+      "parameters.tolerance_pct": 2,
+      "parameters.resistance": 1,
+      "footprint.package_code": 1,
+      "footprint.package_system": 1,
+      "compliance_required": 1,
+      "category": 1
+    },
+    "llm_fallback_unavailable_count": 1
+  },
+  "unresolved_field_counts_total_check": "2+2+3+2+1+1+1+1+1 = 14 field-occurrences across 9 unresolved rows (row4 and row5 each contribute 3, row8 contributes 2, the remaining 5 rows contribute 1 each: 3+3+2+1+1+1+1+1=14)",
+  "hand_verified_reasoning": "Every number below is a direct tally over normalize_edge_cases.expected.json's 19 rows (row_index 0-18), read in full:\n\ncategory (from expected_category per row): row0 resistor, row1 resistor, row2 resistor, row3 resistor, row4 capacitor, row5 capacitor, row6 resistor, row7 capacitor, row8 resistor, row9 module, row10 resistor, row11 ic_digital, row12 capacitor, row13 capacitor, row14 capacitor, row15 fuse, row16 capacitor, row17 capacitor, row18 unknown. Tally: resistor={0,1,2,3,6,8,10}=7, capacitor={4,5,7,12,13,14,16,17}=8, module={9}=1, ic_digital={11}=1, fuse={15}=1, unknown={18}=1. Sum=7+8+1+1+1+1+1=19, matches normalized_rows (no DNP rows in this fixture -- its header has no DNP column at all).\n\nunresolved (from expected_unresolved per row, non-empty count): rows with a non-empty list are 4 (3 fields), 5 (3 fields), 6 (1 field), 8 (2 fields), 9 (1 field), 10 (1 field), 11 (1 field), 16 (1 field), 18 (1 field) = 9 rows; the other 10 rows (0,1,2,3,7,12,13,14,15,17) have expected_unresolved=[]. unresolved_min=unresolved_max=9 (exact, since this is a direct count of an already-hand-verified field, not a re-derivation).\n\nunresolved_field_counts, counting each dotted field across all 9 non-empty rows: row4 contributes parameters.capacitance, parameters.voltage_rating, parameters.dielectric; row5 contributes the same 3 fields; row6 contributes parameters.tolerance_pct; row8 contributes parameters.resistance, parameters.tolerance_pct; row9 contributes footprint.package_code; row10 contributes footprint.package_system; row11 contributes compliance_required; row16 contributes parameters.dielectric; row18 contributes category. Summing per field: parameters.capacitance appears in rows 4,5 = 2; parameters.voltage_rating appears in rows 4,5 = 2; parameters.dielectric appears in rows 4,5,16 = 3; parameters.tolerance_pct appears in rows 6,8 = 2; parameters.resistance appears in row 8 only = 1; footprint.package_code = 1 (row9); footprint.package_system = 1 (row10); compliance_required = 1 (row11); category = 1 (row18).\n\nconfidence_tier_counts (from expected_confidence_tier per row): 'high' rows are exactly the 10 rows with empty unresolved (0,1,2,3,7,12,13,14,15,17) -- independently cross-checked, expected_confidence_tier='high' is stated on each of those 10 rows in the fixture. 'low' rows are the 9 unresolved rows above, each stated expected_confidence_tier='low'. No row states 'medium'.\n\ncriticality_counts (from expected_criticality per row): every row is 'standard' except row15 (fuse_safety_critical_control, criticality='safety') and row16 (y_class_capacitor_safety_critical, criticality='safety') -> safety=2, standard=19-2=17.\n\nllm_fallback_unavailable_count=1: only row18 (genuinely_unparseable_llm_fallback, U99) has expected_category='unknown' with the row's own notes explicitly stating it 'is expected to exercise the LLM-fallback path' -- category==UNKNOWN is the sole trigger for attempting normalize_fallback (requirement_builder.py), and with no llm_client configured in this ingest+normalize-only chain, that attempt degrades to exactly one INFO llm_fallback_unavailable issue."
+}

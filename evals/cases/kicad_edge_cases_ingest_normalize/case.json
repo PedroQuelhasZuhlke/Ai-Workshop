@@ -1,0 +1,32 @@
+{
+  "case_id": "kicad_edge_cases_ingest_normalize",
+  "description": "Runs the real ingest -> normalize chain against fixtures/boms/kicad_edge_cases.csv, the M1/M2 edge-case fixture exercising reference-designator range expansion (R1-R4), non-contiguous comma lists (C1,C3), a range-with-gap (U1-U3,U5), a quantity/refdes MISMATCH (R10-R12 states qty 4 but lists 3 designators), and a DNP row (R20). Proves `quantity_per_board` derives from the expanded refdes list (not the disagreeing stated quantity) and that every non-DNP row still lands unresolved for the same structural reason as the other KiCad-style exports (no tolerance/voltage/dielectric column).",
+  "chain": ["ingest", "normalize"],
+  "inputs": {
+    "bom_file": "fixtures/boms/kicad_edge_cases.csv"
+  },
+  "not_extended_to": [
+    "expand/source/policy/evaluate/plan/export -- no fixtures/catalogs/ snapshot exists for kicad_edge_cases.csv's parts, and every row is unresolved regardless."
+  ],
+  "expect": {
+    "normalized_rows": 5,
+    "dnp_excluded": 1,
+    "unresolved_min": 5,
+    "unresolved_field_counts": {
+      "parameters.tolerance_pct": 2,
+      "parameters.voltage_rating": 2,
+      "parameters.dielectric": 2,
+      "category": 1
+    },
+    "category_counts": {
+      "resistor": 2,
+      "capacitor": 2,
+      "unknown": 1
+    },
+    "requirement_quantity_per_board": {
+      "req-r10-r12-row": 3
+    },
+    "requirements_sourced": 0
+  },
+  "hand_verified_reasoning": "kicad_edge_cases.csv shares kicad_bom.csv's exact header (Reference,Value,Datasheet,Footprint,Qty,DNP,Exclude from BOM,MPN,Manufacturer) -- no Description/Tolerance/Voltage/Dielectric column, confirmed by direct read. Row 4 (R20, row_index 4 per kicad_edge_cases.expected.json) is DNP -> excluded by NormalizeStage before a requirement is built -> normalized_rows = 6 - 1 = 5.\n- row 0 (R1-R4, '10k'): refdes 'R' -> RESISTOR confident. resistance parses. No description column, no '%' in '10k' -> guaranteed parameters.tolerance_pct.\n- row 1 (C1,C3, '100nF'): refdes 'C' -> CAPACITOR confident. capacitance parses. No voltage/dielectric stated -> guaranteed parameters.voltage_rating + parameters.dielectric.\n- row 2 (U1,U2,U3,U5, 'LM324'): refdes 'U' deliberately ambiguous (classify/router.py), no description column at all (empty description_text) -> category=UNKNOWN, confident=False -> unresolved=['category'].\n- row 3 (R10,R11,R12, '1k'): reference_designators has 3 entries (R10,R11,R12) though the Qty column states 4 -- per kicad_edge_cases.expected.json's own row-3 'scenario' note, this is the deliberate quantity/refdes mismatch case. NormalizedRequirement.quantity_per_board = len(line.reference_designators) (requirement_builder.py) = 3, NOT the stated 4 -- this is the field asserted under requirement_quantity_per_board above. Category/value reasoning otherwise identical to row 0 -> guaranteed parameters.tolerance_pct.\n- row 5 (C10, '1uF'): identical reasoning to row 1 -> guaranteed parameters.voltage_rating + parameters.dielectric.\nTally: all 5 non-DNP rows have a non-empty unresolved list -> unresolved_min=5 (exact, since every field involved -- tolerance_pct/voltage_rating/dielectric/category -- was independently confirmed absent from this file's columns, same certainty level as the kicad_bom case). unresolved_field_counts: tolerance_pct appears on rows 0 and 3 (2), voltage_rating and dielectric each appear on rows 1 and 5 (2 each), category appears on row 2 (1). category_counts: resistor={0,3}=2, capacitor={1,5}=2, unknown={2}=1; total=5, matches normalized_rows."
+}

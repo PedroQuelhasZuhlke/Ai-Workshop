@@ -1,0 +1,38 @@
+{
+  "case_id": "kicad_bom_ingest_normalize_all_unresolved",
+  "description": "Runs the REAL `IngestStage` -> `NormalizeStage` chain (no hand-built shortcuts, no LLM client configured) against the M1/M4 golden BOM `kicad_bom.csv`. Every one of the 9 non-DNP rows ends up with a non-empty `unresolved` list. This is not a bug in the fixture or the pipeline: it is what a realistic KiCad export (Reference/Value/Datasheet/Footprint/Qty/DNP/Exclude from BOM/MPN/Manufacturer -- no Description, Tolerance, Voltage, or Dielectric column) actually produces once every hard invariant in categories.py is enforced. It is also the documented reason `tests/pipeline/test_sourcing_pipeline.py` hand-builds its own already-resolved requirements instead of running ingest+normalize on this file.",
+  "chain": ["ingest", "normalize"],
+  "inputs": {
+    "bom_file": "fixtures/boms/kicad_bom.csv"
+  },
+  "not_extended_to": [
+    "expand/source/policy/evaluate/plan/export -- every requirement's `unresolved` is non-empty, so `ExpandStage` (src/pcbpick/sourcing/expand.py:32, `if requirement.unresolved: ... excluded from sourcing`) excludes all 9 of them; nothing downstream has any input to act on."
+  ],
+  "expect": {
+    "normalized_rows": 9,
+    "dnp_excluded": 1,
+    "unresolved_min": 9,
+    "unresolved_max": 9,
+    "unresolved_field_counts": {
+      "parameters.tolerance_pct": 2,
+      "parameters.voltage_rating": 3,
+      "parameters.dielectric": 3,
+      "category": 2,
+      "parameters.frequency": 1,
+      "parameters.pin_count": 1,
+      "footprint.package_code": 0
+    },
+    "category_counts": {
+      "resistor": 2,
+      "capacitor": 3,
+      "crystal": 1,
+      "connector": 1,
+      "unknown": 2
+    },
+    "blocking_normalization_unresolved_count": 9,
+    "llm_fallback_unavailable_count": 2,
+    "requirements_sourced": 0,
+    "filled_at_tier_0_or_1_min": 0
+  },
+  "hand_verified_reasoning": "kicad_bom.csv (fixtures/boms/kicad_bom.csv) header: Reference,Value,Datasheet,Footprint,Qty,DNP,Exclude from BOM,MPN,Manufacturer -- confirmed by direct read, no Description/Tolerance/Voltage/Dielectric column exists. Row-by-row (row_index per kicad_bom.expected.json; R99/row 8 is DNP, excluded by NormalizeStage.run's `if not line.populate: continue`, src/pcbpick/normalize/stage.py):\n- row 0 (R1-R3, '10k'): refdes prefix 'R' -> RESISTOR, confident (src/pcbpick/classify/router.py _UNAMBIGUOUS_REFDES_PREFIX). resistance parses from '10k' (RKM, unambiguous). No tolerance letter in '10k', no Description column to carry an explicit '1%' -- tolerance_pct required for RESISTOR per contracts/categories.py and genuinely absent -> unresolved=['parameters.tolerance_pct'].\n- row 1 (R4, '4k7'): identical reasoning -> unresolved=['parameters.tolerance_pct'].\n- row 2 (C1-C2, '100n'): refdes 'C' -> CAPACITOR confident. capacitance parses from '100n'. voltage_rating and dielectric are both required for CAPACITOR and both come from `ratings.extract_voltage_rating`/`extract_dielectric` run against `combined_text` (value+description); description is empty here and '100n' alone states neither -> unresolved=['parameters.dielectric','parameters.voltage_rating'] (sorted, per requirement_builder.py's `unresolved = sorted(set(unresolved))`).\n- row 3 (C3, '10uF'), row 4 (C4, '0.1uF'): identical reasoning to row 2 -> same 2-field unresolved each.\n- row 5 (U1, 'LM358'): refdes prefix 'U' is deliberately absent from _UNAMBIGUOUS_REFDES_PREFIX (router.py's own comment: 'Ambiguous prefixes (T, X, U, K/RY collisions) are deliberately absent'). No Description column means description_text=''; none of the _DESCRIPTION_KEYWORDS regexes match empty text -> category=UNKNOWN, confident=False -> unresolved=['category']. Because category==UNKNOWN, `normalize_fallback` is attempted (requirement_builder.py's `if category == ComponentCategory.UNKNOWN:` block); with no llm_client configured, `call_structured` returns failed=True immediately (client=None path in llm/client.py) -> one INFO `llm_fallback_unavailable` issue; category and unresolved are unchanged by a failed fallback.\n- row 6 (Y1, '16MHz'): refdes prefix 'Y' -> CRYSTAL, confident. CRYSTAL requires only 'frequency' (categories.py) but no code path in requirement_builder.py parses a frequency value at all (_PRIMARY_PARSER only covers RESISTOR/CAPACITOR/INDUCTOR; `ratings.py`'s helpers shown in the module only extract voltage/current/dielectric) -> parameters={} for this row regardless of BOM content -> unresolved=['parameters.frequency'].\n- row 7 (J1, 'Conn_01x04'): refdes prefix 'J' -> CONNECTOR, confident. CONNECTOR requires only 'pin_count', which likewise has no populating code path (footprint pin_count is a distinct, also-unset field) -> unresolved=['parameters.pin_count'].\n- row 9 (TP1, '~'): reference designator prefix regex `^([A-Za-z]+)\\d` on 'TP1' greedily captures 'TP', which is not a key in _UNAMBIGUOUS_REFDES_PREFIX (only single letters plus 'FB'/'SW' are listed) -> from_prefix=None; empty description -> category=UNKNOWN, confident=False -> unresolved=['category'], same fallback-attempted/INFO-issue path as row 5.\nTallies: unresolved_field_counts sums to 2+3+3+2+1+1=12 occurrences across 9 rows (rows 2/3/4 each contribute 2 fields). category_counts: resistor(row0,row1)=2, capacitor(row2,row3,row4)=3, crystal(row6)=1, connector(row7)=1, unknown(row5,row9)=2; total=9, matches normalized_rows. blocking_normalization_unresolved_count=9 because NormalizeStage.run appends one BLOCKING 'normalization_unresolved' issue per requirement with non-empty unresolved, and all 9 qualify. llm_fallback_unavailable_count=2 because only rows 5 and 9 have category==UNKNOWN, the sole trigger condition for attempting the fallback. requirements_sourced=0 and filled_at_tier_0_or_1_min=0 follow directly from ExpandStage's unconditional exclusion of any requirement with a non-empty unresolved list (src/pcbpick/sourcing/expand.py line 32).\n\nM8 delta (rule change): `normalize/package.py`'s `_MECHANICAL_FAMILIES` addition (`PINHEADER`/`PINSOCKET`/`TESTPOINT`) now recognizes J1's `Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical` and TP1's `TestPoint:TestPoint_Pad_1.5x1.5mm` footprints, both previously unrecognized. Verified directly by calling `resolve_package` on both raw strings before/after: before, `recognized=False` for both, contributing 2 occurrences of `footprint.package_code` to `unresolved` (a previously undocumented gap this case's own `expect` map omitted entirely, caught only because `evals/test_eval_cases.py`'s `_KNOWN_CASE_FILE_DEFECTS` flagged the resulting `expected 0, got 2` mismatch); after, `recognized=True` for both (package_code `PINHEADER`/`TESTPOINT`, mounting left `None` -- not invented), `footprint.package_code` no longer appears in any row's `unresolved`, and `footprint.package_code: 0` above is now an explicit, exact, no-longer-defective assertion. No other field in this case's `expect` changed. `evals/test_eval_cases.py`'s `_KNOWN_CASE_FILE_DEFECTS` entry for this case was removed in the same change."
+}

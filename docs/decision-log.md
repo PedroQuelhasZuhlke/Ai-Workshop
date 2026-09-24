@@ -1002,5 +1002,177 @@ swaps `FixtureAdapter` for the three live adapters; `SourceStage`, `PolicyStage`
 this milestone. Awaiting explicit user approval before `/roadmap-m8-evals-
 hardening`.
 
+## 20 — M8 — Evals and hardening (2026-09-24)
+
+**Precondition check:** M0–M7 confirmed complete before starting — every milestone's
+decision-log section (§13–19) reviewed, each ending in a "done-when criterion met"
+statement and 428 pre-existing tests green, per the M8 factory prompt's stop-if-not-
+done instruction.
+
+**Scope implemented:** a golden-BOM regression suite (`evals/`) with hand-verified
+scored expectations covering every milestone's committed fixtures; prompt regression
+fixtures and tests for both sanctioned LLM call sites (`normalize_fallback`,
+`candidate_rationale`); run replay tooling (`pcbpick replay <run_id> [--from
+<stage>]`) with structural artifact diffing (`pipeline/diff.py`) instead of raw
+byte/line comparison; coverage metrics (`pipeline/coverage.py`) matching
+`testing.instructions.md`'s "Tracked metrics" section verbatim; and observability
+(`StageMeta.issue_code_counts`, `evals/`'s per-field pass/fail reporting).
+
+**Agent delegation, in order (per §11's rule of thumb, plus this milestone's own
+three-step process):**
+1. `fixture-curator` built `evals/cases/` (7 cases spanning every EDA-profile BOM
+   fixture plus the M2/M4 edge-case fixtures) and `fixtures/llm/{normalize_fallback,
+   candidate_rationale}/` (prompt regression fixtures for both call sites), each with
+   a `hand_verified_reasoning`/`README.md` trail. Ran out of turns twice mid-task
+   (once after the eval cases and READMEs, once after `evals/`'s own
+   `_KNOWN_CASE_FILE_DEFECTS`-flagging test skeleton); the orchestrating session
+   completed the six `fixtures/llm/**` fixture files it had documented but not yet
+   written, matching its own schema exactly.
+2. `stage-builder` implemented `pipeline/{eval_runner,diff,replay,coverage}.py`,
+   `tests/{llm,pipeline}/test_{prompt_regression,diff,coverage,replay}.py`, and the
+   `pcbpick replay` CLI command, across two passes (also ran out of turns once,
+   mid-wiring `StageMeta.issue_code_counts`).
+3. `invariant-auditor` reviewed the full session's changes plus a full-codebase
+   pass, read-only (findings and resolutions below).
+4. Orchestrating session made one deliberate rule change (`normalize/package.py`)
+   and confirmed the eval suite reported the required measurable delta (below).
+
+**Decision: `evals/` case files are JSON, not the YAML `testing.instructions.md`'s
+own example shows.** No `yaml` dependency exists in this project (`pyproject.toml`);
+the doc's fenced yaml block is illustrative of the *shape* (case id, bom, snapshot,
+`expect` block), not a literal format requirement. `evals/README.md` documents the
+JSON schema in full so the shape is still auditable and diffable.
+
+**Decision: the milestone prompt's parenthetical "(column mapping fallback,
+normalization fallback)" naming the two LLM call sites was factually stale and not
+followed literally.** Per `.github/instructions/llm-calls.instructions.md` and
+§7's M1 decision, the two *actually* sanctioned and wired call sites are
+`normalize_fallback` and `candidate_rationale` — column-mapping LLM fallback was
+deliberately deferred in M1 and never given a prompt template or a real call site
+(`MappingMethod.LLM_FALLBACK` still falls through to `UNRESOLVED`). Building prompt
+regression fixtures for a call site that doesn't exist would itself have been an
+undocumented third LLM call site, which the instructions require a documented
+architecture decision to add. Prompt regression coverage was built for the two real
+call sites instead.
+
+**Decision: `evals/` case data and the `pipeline/` runner/tooling were built as two
+separate agent passes, per the milestone's own process, and neither touches the
+other's output.** The eval runner consumes the fixture-curator's `case.json`/
+`fixtures/llm/**` schema exactly as documented in their own `README.md` files rather
+than the fixture-curator anticipating the runner's internals — the same contract-
+first handoff pattern M4 used between `supplier-adapter-builder` and
+`fixture-curator` for `fixtures/catalogs/`.
+
+**Decision: `evals/` was added to `[tool.pytest.ini_options] testpaths` (was
+`["tests"]`, now `["tests", "evals"]`) and to CI would follow automatically** since
+`ci.yml`'s `pytest` step takes no path argument — this makes the eval suite a real
+merge gate, not an opt-in extra, satisfying "a prompt or rule change reports a
+measurable delta **before merge**" literally rather than only when someone
+remembers to run `pytest evals/` by hand.
+
+**Decision: `[tool.mypy] files = ["src"]` was left unchanged, not widened to
+`tests`/`evals`, despite the invariant-auditor flagging this as the reason a real
+bug (below) went undetected for as long as it did.** Running unscoped `mypy .`
+surfaces 63 pre-existing, out-of-scope test-file errors, the same number and same
+finding M7's session already made and deliberately left untouched (§19). Widening
+`files` now would either break the "mypy --strict clean" merge gate on unrelated
+pre-existing debt or require fixing all 63 in this milestone — out of proportion for
+a hardening pass whose own scope is `evals`/prompt-regression/replay tooling, not a
+repo-wide test-suite type-safety sweep. Logged here as an accepted, tracked gap
+rather than silently worked around, exactly the precedent §19 set.
+
+**Genuine bug found and fixed: `LLMClient` Protocol was structurally
+unsatisfiable by `FakeLLMClient`, undetected until this milestone.**
+`src/pcbpick/llm/client.py`'s `LLMClient(Protocol)` declared `model_id: str` as a
+plain (implicitly read-write) attribute; `FakeLLMClient` is `@dataclass(frozen=True)`,
+and mypy strict does not consider a frozen dataclass's field a valid conformance to a
+Protocol member that implies write access, even though it is always read correctly at
+runtime. This was invisible for four milestones because `[tool.mypy] files = ["src"]`
+never type-checked `tests/`, the only place `FakeLLMClient` had ever been passed into
+`NormalizeStage`/`EvaluateStage` before this session's `pipeline/eval_runner.py`
+became the first `src/`-scoped caller to do so, immediately surfacing 7 `mypy`
+errors. Root-caused (not worked around at the call site) by changing
+`LLMClient.model_id` to a read-only `@property` in the Protocol declaration — this
+permits both frozen and mutable conforming clients without loosening anything a real
+provider client could exploit (nothing anywhere writes to `.model_id`; the
+determinism requirement in `llm-calls.instructions.md` — "pin the model identifier in
+config, record it in `meta.json`" — is about config/logging, not attribute
+mutability).
+
+**Two more real bugs found and fixed while chasing the above through `mypy
+--strict`, both from reusing a variable name for two differently-typed values
+within the same function scope** (mypy infers a single type per variable across a
+whole function body, not per-branch): `eval_runner.py`'s `_run_chain` reused `pairs`
+for `list[tuple[NormalizedRequirement, PrePolicyCandidate]]` (policy) and then
+`list[tuple[NormalizedRequirement, PartCandidate]]` (evaluate) — renamed to
+`policy_pairs`/`evaluate_pairs`. `_score_candidates_by_requirement` reused
+`candidate` across two `for` loops of different item types — renamed to
+`source_candidate`/`policy_candidate`.
+
+**Invariant-auditor findings and resolutions (0 BLOCKING, 4 SHOULD-FIX, 2 MINOR):**
+
+| # | Sev | Finding | Resolution |
+|---|---|---|---|
+| 1 | SHOULD-FIX | `diff.py`'s `_detect_id_key` picked a candidate id key (e.g. `requirement_id`) whenever present on every item, without checking it was actually *unique* — several `PartCandidate`s legitimately share one `requirement_id` (the normal shape once `source`/`policy`/`evaluate` land in `STAGES`), so id-keyed diffing would silently collapse distinct candidates onto the same dict key and hide a real divergence (e.g. a policy-rule change making a candidate disappear) behind a false "identical" replay result | `_detect_id_key` now requires the candidate key to be unique across the list; `_diff_list` additionally requires the *same* key to be independently unique on both `before` and `after` before trusting it, falling back to the order-insensitive multiset comparison otherwise. Regression tests added covering both the duplicate-key and unique-on-one-side-only cases |
+| 2 | SHOULD-FIX | `fixtures/llm/normalize_fallback/valid_ic_widget_row.json` — the only accept-path fixture for that call site — was itself invalid: its `response_text`'s `footprint.mounting` was `"smd"`, not a valid `MountingType` member (only `"smt"`/`"tht"` exist), so it actually exercises the *fail* path despite claiming `validates_against_response_model: true`/`attempts: 1`, leaving the call site's happy path with zero real regression coverage | Fixed at the source (`"smd"` → `"smt"`) rather than left as a permanent known-issue — this is fixture data the orchestrating session itself had authored, not the fixture-curator's, so correcting it directly (and removing `tests/llm/test_prompt_regression.py`'s now-unneeded `_KNOWN_FIXTURE_DEFECTS` workaround) was the right call rather than compounding a documented-but-uncorrected defect |
+| 3 | SHOULD-FIX | `pcbpick replay`/`resume` built `run_dir` directly from an unsanitized, caller-supplied `run_id` — the identical path-traversal class of bug M6's audit found and fixed once already for `UploadFile.filename` (§17, finding 1), left unaddressed here for a new CLI surface | Added `runner.safe_run_dir(runs_root, run_id)`, rejecting empty/`.`/`..`/path-separator-bearing ids, reused by both `PipelineRunner.resume` and `pipeline.replay.replay_run`. Regression tests added for both entry points across `../escape`, `..\\escape`, `..`, empty, and `a/b` |
+| 4 | SHOULD-FIX | No eval case reaches `plan`/`export` (self-flagged by the fixture-curator's own `evals/README.md`), and `mypy.files` still excludes `tests`/`evals` | Both accepted as tracked, documented follow-ups rather than fixed in this pass — see the two "Decision" entries above explaining why widening either now is out of proportion for this milestone. Recorded in the roadmap review gate below for the user's visibility |
+| 5 | MINOR | `diff.py`'s recursive dict/list traversal had no depth guard against a pathologically deep artifact raising a raw `RecursionError` instead of a clean error | Added `_MAX_DIFF_DEPTH` (100) with a `ValueError` raised past it, threaded through `_diff_value`/`_diff_dict`/`_diff_list`/`_diff_list_by_id` |
+| 6 | MINOR | Neither `NormalizeStage` nor `EvaluateStage` ever surfaces `llm_client.model_id` into `StageMeta`/`RunManifest`, despite `llm-calls.instructions.md`'s "record it in `meta.json`" instruction — pre-existing, not introduced this session | Left as a documented, tracked gap — `StageMeta` has no per-stage "model/adapter version" field at all yet for *any* stage (not just the two LLM ones), so closing this properly is a small contract-shaped addition better scoped with the next stage-level change that needs it, not bolted on here |
+
+**Measurable delta demonstrating the done-when criterion:** `normalize/package.py`'s
+footprint-family recognition was missing two named KiCad footprint families
+(`PinHeader`, `TestPoint`) that carry no IPC land-pattern prefix and no bare digit
+code — a gap the fixture-curator's own `kicad_bom_ingest_normalize_all_unresolved`
+case had already surfaced as a `_KNOWN_CASE_FILE_DEFECTS`-flagged mismatch
+(`unresolved_field_counts.footprint.package_code`: case expected 0, actual 2, from
+J1's `Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical` and TP1's
+`TestPoint:TestPoint_Pad_1.5x1.5mm`). Added a small `_MECHANICAL_FAMILIES` table
+(`PINHEADER`, `PINSOCKET`, `TESTPOINT`) recognized the same way the existing
+`_SEMICONDUCTOR_FAMILIES` fallback already works (family name present → package
+identity known, no dimension/mounting invented beyond what the name states).
+Before: `resolve_package` returned `recognized=False` for both raw strings,
+2 rows carried `footprint.package_code` in `unresolved`, and the eval suite only
+passed by way of the known-issue workaround. After: both resolve
+(`package_code="PINHEADER"`/`"TESTPOINT"`, `mounting=None`), zero rows carry
+`footprint.package_code` in `unresolved`, the case's `expect` map was updated to
+assert `"footprint.package_code": 0` explicitly (an exact, no-longer-defective
+assertion, per `testing.instructions.md`'s "any change to normalization behavior
+requires a new or updated eval case in the same change"), and the
+`_KNOWN_CASE_FILE_DEFECTS` workaround was removed from `evals/test_eval_cases.py`
+entirely (now an empty dict). No other case's `expect` fields changed — verified by
+re-running the full `evals/` suite and confirming every other case's field-by-field
+scores were untouched before and after.
+
+**Verification performed:**
+- `pytest -q` — **474 passed** (was 428 at the M7 baseline; +46: 8 in `evals/`,
+  6 in `tests/llm/`, 11 in `tests/pipeline/test_diff.py`, 9 in
+  `tests/pipeline/test_coverage.py`, 7 in `tests/pipeline/test_replay.py`, and 5 new
+  parametrized cases added to the pre-existing `tests/pipeline/test_runner.py` for
+  the invariant-auditor's path-traversal finding)
+- `ruff check .` / `ruff format --check .` — clean on every file this milestone
+  touched (5 pre-existing, out-of-scope files elsewhere in the repo remain
+  unformatted under a newer `ruff` than they were last verified against — left
+  untouched, confirmed via `git status --porcelain` to be outside this session's
+  diff, same "don't fix what you didn't touch" discipline as M7 §19)
+- `mypy` (strict, `src`-only per `pyproject.toml`) — clean across 113 source files,
+  after fixing the genuine `LLMClient` Protocol bug and the two variable-reuse bugs
+  above (not by suppressing or ignoring the errors)
+- `pcbpick replay <run_id>` manually exercised end to end against a real
+  `pcbpick run` output: reported `identical` for both registered stages with exit
+  code 0; confirmed the command's own exit code goes non-zero on divergence by
+  code inspection of `cli.py`'s `replay_command` (raises `click.ClickException`
+  when `not result.is_identical`)
+- `evals/` suite run and re-run at each stage of the demonstration change above,
+  full per-field pass/fail report captured, not just an aggregate pass count
+
+**Done-when criterion met:** the deliberate `normalize/package.py` rule change above
+produced a directly observable before/after delta in the eval suite's own per-field
+report (`unresolved_field_counts.footprint.package_code`: 2 occurrences → 0), the
+corresponding eval case was updated in the same change, and a previously-tracked
+known-issue was closed as a direct result — demonstrating the eval suite is wired
+into the loop a real prompt/rule change would go through, not just built and left
+unexercised. This is the last milestone in `docs/roadmap.md`; awaiting explicit user
+confirmation that the roadmap is complete.
 
 

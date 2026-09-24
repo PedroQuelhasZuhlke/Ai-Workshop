@@ -1,0 +1,32 @@
+{
+  "case_id": "orcad_bom_ingest_normalize",
+  "description": "Runs the real ingest -> normalize chain against fixtures/boms/orcad_bom.csv, an OrCAD/Allegro-style ad-hoc report with a 4-line title block above the real header (header_row_index=4 per the M1 fixture). Once the header is found, the same passive/connector/LED unresolved pattern as the other three exports holds for the confidently-classifiable rows; U1's outcome is deliberately left unscored for the same reason as eagle_bom's U1 (its Description 'Dual Op-Amp' is hyphenated the same way, but footprint resolution for 'SOIC8' was not independently traced).",
+  "chain": ["ingest", "normalize"],
+  "inputs": {
+    "bom_file": "fixtures/boms/orcad_bom.csv"
+  },
+  "not_extended_to": [
+    "expand/source/policy/evaluate/plan/export -- no fixtures/catalogs/ snapshot exists for orcad_bom.csv's parts, and none of the confidently-scored rows resolve fully anyway."
+  ],
+  "expect": {
+    "normalized_rows": 6,
+    "dnp_excluded": 0,
+    "unresolved_min": 5,
+    "unresolved_field_counts_guaranteed": {
+      "parameters.tolerance_pct": 2,
+      "parameters.voltage_rating": 1,
+      "parameters.dielectric": 1,
+      "parameters.pin_count": 1,
+      "parameters.forward_voltage": 1,
+      "parameters.forward_current": 1
+    },
+    "category_counts_guaranteed": {
+      "resistor": 2,
+      "capacitor": 1,
+      "connector": 1,
+      "led": 1
+    },
+    "requirements_sourced": 0
+  },
+  "hand_verified_reasoning": "orcad_bom.csv data rows (after the 4-line title block; row_index per orcad_bom.expected.json, header_row_index=4):\n- row 0 (R1-R4, Value '10k', Description 'Resistor'): refdes 'R' -> RESISTOR confident. resistance parses. No tolerance stated anywhere -> guaranteed parameters.tolerance_pct.\n- row 1 (R5, '4k7', 'Resistor'): identical -> guaranteed parameters.tolerance_pct.\n- row 2 (C1-C2, '100nF', 'Capacitor'): refdes 'C' -> CAPACITOR confident. capacitance parses. No voltage/dielectric stated -> guaranteed parameters.voltage_rating + parameters.dielectric.\n- row 3 (U1, Value empty, Description 'Dual Op-Amp'): same hyphenated-'Op-Amp' match as eagle_bom's U1 -> likely category=IC_ANALOG (no required parameters), contingent on 'SOIC8' footprint resolution not independently traced here -> deliberately excluded from every guaranteed tally, same as eagle_bom's row 5.\n- row 4 (J1, Value empty, Description 'Connector 4-pin header'): refdes 'J' -> CONNECTOR confident, independent of description. No pin_count-populating code path -> guaranteed parameters.pin_count.\n- row 5 (D1, Value empty, Description 'LED Red'): refdes 'D' -> DIODE from prefix, description keyword 'led' specializes to LED, confident. Neither forward_voltage nor forward_current stated -> guaranteed parameters.forward_voltage + parameters.forward_current.\nTally: rows 0,1,2,4,5 are guaranteed unresolved (5 of 6); row 3 is the sole row not scored either way -> unresolved_min=5. category_counts_guaranteed: resistor={0,1}=2, capacitor={2}=1, connector={4}=1, led={5}=1; row 3 (U1) omitted for the same documented reason as eagle_bom's U1."
+}

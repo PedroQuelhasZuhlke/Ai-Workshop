@@ -75,3 +75,13 @@ def test_resume_requires_a_registered_stage(tmp_path: Path, source_file: Path) -
 
     with pytest.raises(StageNotFoundError):
         runner.resume(run_id, from_stage="policy")
+
+
+@pytest.mark.parametrize("malicious_run_id", ["../escape", "..\\escape", "..", "", "a/b"])
+def test_resume_rejects_a_run_id_that_could_escape_runs_root(
+    tmp_path: Path, malicious_run_id: str
+) -> None:
+    runner = PipelineRunner(tmp_path / "runs")
+
+    with pytest.raises(RunNotFoundError):
+        runner.resume(malicious_run_id, from_stage="ingest")

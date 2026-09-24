@@ -73,6 +73,16 @@ _SEMICONDUCTOR_FAMILIES: tuple[str, ...] = (
     "SMC",
 )
 
+# KiCad/Fusion-style named footprint families for connectors and test points that
+# carry no IPC land-pattern prefix and no bare digit code -- recognized the same
+# way as `_SEMICONDUCTOR_FAMILIES` (family name present -> package identity known,
+# no dimension/mounting invented beyond what the name itself states).
+_MECHANICAL_FAMILIES: tuple[str, ...] = (
+    "PINHEADER",
+    "PINSOCKET",
+    "TESTPOINT",
+)
+
 _ISOLATED_DIGIT_RUN_RE = re.compile(r"(?<!\d)(\d{4,5})(?!\d)")
 
 
@@ -129,5 +139,9 @@ def resolve_package(footprint_raw: str) -> ResolvedPackage:
     for family in _SEMICONDUCTOR_FAMILIES:
         if re.search(rf"\b{re.escape(family)}\b", upper):
             return ResolvedPackage(upper, None, None, None, True, False, text)
+
+    for family in _MECHANICAL_FAMILIES:
+        if family in upper:
+            return ResolvedPackage(family, None, None, None, True, False, text)
 
     return ResolvedPackage(None, None, None, None, False, False, text)

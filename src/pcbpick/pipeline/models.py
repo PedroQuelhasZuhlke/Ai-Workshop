@@ -16,6 +16,16 @@ class StageMeta(BaseModel):
     config_hash: str
     duration_seconds: float
     issue_counts: dict[str, int]
+    # Additive (M8): the same issues `issue_counts` already tallies by severity,
+    # tallied instead by `StageIssue.code` -- e.g. `llm_fallback_unavailable`,
+    # `candidate_rationale_llm_failed`, `catalog_details_missing`. This is the one
+    # generic substrate both the LLM fallback/failure rate and any future
+    # supplier-adapter error rate can be read from without a second, parallel
+    # counting mechanism (`sourcing/suppliers/resilience.py`'s `CircuitBreaker`
+    # tracks consecutive failures for its own trip/cooldown decision, but does not
+    # expose a cumulative call/failure count today -- adding one there is flagged as
+    # a follow-up, not duplicated here with a second, less authoritative tally).
+    issue_code_counts: dict[str, int] = Field(default_factory=dict)
 
 
 class RunManifest(BaseModel):

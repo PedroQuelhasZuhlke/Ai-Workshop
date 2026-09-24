@@ -19,7 +19,13 @@ class LLMClient(Protocol):
     the client itself does no parsing or retrying, `call_structured` owns that.
     """
 
-    model_id: str
+    # A read-only property, not a plain attribute: a plain `model_id: str` protocol
+    # member requires both read *and* write access from any conforming
+    # implementation, which a frozen dataclass (e.g. `FakeLLMClient`) can never
+    # satisfy under mypy strict, even though it is perfectly readable. Declaring it
+    # read-only here lets both frozen and mutable clients conform.
+    @property
+    def model_id(self) -> str: ...
 
     def generate(
         self, *, template: str, variables: dict[str, str], response_model: type[BaseModel]

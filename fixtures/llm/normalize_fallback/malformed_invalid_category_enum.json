@@ -1,0 +1,29 @@
+{
+  "case_id": "malformed_invalid_category_enum",
+  "call_site": "normalize_fallback",
+  "description": "Valid JSON syntax, but `category` is a string the ComponentCategory enum does not define (\"widget\") -- the model inventing a category value rather than declining with null. Pydantic enum validation rejects it with a ValidationError, the same code path as invalid JSON syntax. Proves that a schema-shaped-but-semantically-invalid response is rejected exactly like malformed text, never silently coerced or defaulted to the hint category.",
+
+  "request_variables": {
+    "row": {
+      "Value": "Widget-9000",
+      "Description": "Programmable timing widget, unknown family",
+      "Footprint": ""
+    },
+    "category_hint": ""
+  },
+
+  "response_text": "{\"schema_version\": \"v1\", \"category\": \"widget\", \"parameters\": {}, \"footprint\": null, \"compliance_required\": [], \"notes\": \"Guessing a made-up category.\"}",
+
+  "validates_against_response_model": false,
+
+  "expected_call_structured_outcome": {
+    "failed": true,
+    "attempts": "max_retries + 2"
+  },
+
+  "expected_stage_issue": {
+    "code": "llm_fallback_unavailable",
+    "severity": "INFO",
+    "notes": "Same severity reasoning as malformed_invalid_json.json -- the row's category was already unresolved and already covered by NormalizeStage's own BLOCKING issue; this case only proves that an enum-invalid value is rejected by validation rather than accepted as ComponentCategory.UNKNOWN or coerced to the nearest valid member."
+  }
+}

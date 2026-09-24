@@ -1,0 +1,83 @@
+{
+  "case_id": "malformed_extra_field",
+  "call_site": "candidate_rationale",
+  "description": "Syntactically valid JSON, and both required fields are present and well-typed, but the model adds an unauthorized third field (`confidence`) -- asserting something it is never allowed to decide, per candidate_rationale.md's \"you cannot change a substitution tier or a policy result\" instruction. CandidateRationale's `extra=\"forbid\"` config rejects the whole response with a ValidationError, same degrade path as non-JSON text -- proves the model cannot smuggle a new authoritative field past the response model just by making the rest of the payload look correct.",
+
+  "request_variables": {
+    "requirement": {
+      "category": "capacitor",
+      "parameters": {
+        "capacitance": {
+          "value": "0.0000001",
+          "unit": "farad",
+          "tolerance_pct": "10",
+          "min": null,
+          "max": null,
+          "raw_text": "100n",
+          "source": "parsed"
+        }
+      },
+      "footprint": {
+        "package_code": "CAPC1005X55N",
+        "mounting": "smd",
+        "pin_count": 2,
+        "pitch_mm": null,
+        "length_mm": null,
+        "width_mm": null,
+        "height_mm": null,
+        "thermal_pad": null,
+        "raw_text": "0402"
+      },
+      "criticality": "standard"
+    },
+    "candidate": {
+      "mpn": "GRM155R71C104KA88D",
+      "manufacturer": "Murata",
+      "parameters": {
+        "capacitance": {
+          "value": "0.0000001",
+          "unit": "farad",
+          "tolerance_pct": "10",
+          "min": null,
+          "max": null,
+          "raw_text": "100nF",
+          "source": "catalog"
+        }
+      },
+      "footprint": {
+        "package_code": "CAPC1005X55N",
+        "mounting": "smd",
+        "pin_count": 2,
+        "pitch_mm": null,
+        "length_mm": null,
+        "width_mm": null,
+        "height_mm": null,
+        "thermal_pad": null,
+        "raw_text": "0402"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs"],
+      "substitution_tier": 0,
+      "policy_results": [
+        {"rule": "capacitance_tolerance", "passed": true},
+        {"rule": "footprint_identity", "passed": true},
+        {"rule": "dielectric_class_equivalence", "passed": true}
+      ]
+    }
+  },
+
+  "response_text": "{\"rationale\": \"Exact capacitance and tolerance match at the required 0402 footprint.\", \"concerns\": [], \"confidence\": 0.92}",
+
+  "validates_against_response_model": false,
+
+  "expected_call_structured_outcome": {
+    "failed": true,
+    "attempts": "max_retries + 2"
+  },
+
+  "expected_stage_issue": {
+    "code": "candidate_rationale_llm_failed",
+    "severity": "BLOCKING",
+    "notes": "Same BLOCKING reasoning as malformed_invalid_json.json. This case specifically proves the extra=\"forbid\" boundary: a well-formed rationale plus one unauthorized field is rejected in full, not accepted with the extra field silently dropped."
+  }
+}

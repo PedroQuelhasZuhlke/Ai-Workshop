@@ -1,0 +1,34 @@
+{
+  "case_id": "altium_bom_ingest_normalize",
+  "description": "Runs the real ingest -> normalize chain against fixtures/boms/altium_bom.csv (Designator/Comment/Description/Footprint/LibRef/Quantity/Manufacturer/Manufacturer Part Number/Supplier columns -- the Altium EDA profile). Every one of the 10 rows lands with at least one unresolved field, for the same structural reason as the KiCad case (no explicit tolerance/voltage/dielectric/pin-count column), plus a documented punctuation trap: row 5 (U1, 'Op Amp Single SOIC-8') fails to classify as ic_analog because the description-keyword regex requires a hyphen or no separator between 'op' and 'amp', not a space.",
+  "chain": ["ingest", "normalize"],
+  "inputs": {
+    "bom_file": "fixtures/boms/altium_bom.csv"
+  },
+  "not_extended_to": [
+    "expand/source/policy/evaluate/plan/export -- no fixtures/catalogs/ snapshot exists for altium_bom.csv's MPNs, and every row is unresolved regardless, so ExpandStage would exclude all 10 even if one did."
+  ],
+  "expect": {
+    "normalized_rows": 10,
+    "dnp_excluded": 0,
+    "unresolved_min": 10,
+    "unresolved_field_counts_guaranteed": {
+      "parameters.tolerance_pct": 3,
+      "parameters.voltage_rating": 2,
+      "parameters.dielectric": 2,
+      "category": 3,
+      "parameters.pin_count": 1,
+      "parameters.forward_voltage": 1,
+      "parameters.forward_current": 1
+    },
+    "category_counts_guaranteed": {
+      "resistor": 3,
+      "capacitor": 2,
+      "connector": 1,
+      "led": 1,
+      "unknown": 3
+    },
+    "requirements_sourced": 0
+  },
+  "hand_verified_reasoning": "altium_bom.csv rows (row_index per altium_bom.expected.json, 1-indexed reasoning below matches that file's 0-based rows):\n- row 0 (R1-R4, Comment '10k', Description 'Resistor'): refdes 'R' -> RESISTOR (confident, agrees with description keyword 'resistor'). resistance parses from '10k'. No '%' anywhere in Comment or Description -> tolerance_pct required and absent -> guaranteed unresolved: parameters.tolerance_pct.\n- row 1 (R5, '4k7', 'Resistor'): identical reasoning -> guaranteed parameters.tolerance_pct.\n- row 2 (C1-C2, '100nF', 'Capacitor'): refdes 'C' -> CAPACITOR confident. capacitance parses. Description 'Capacitor' alone states no voltage or dielectric -> guaranteed parameters.voltage_rating + parameters.dielectric.\n- row 3 (C3, '0.1uF', 'Capacitor'): identical -> guaranteed parameters.voltage_rating + parameters.dielectric.\n- row 4 (R6, '1R0', 'Resistor'): resistance parses ('1R0' -> 1.0 ohm per the RKM embedded-R rule, same pattern as the skill's '4R7' example). No tolerance stated -> guaranteed parameters.tolerance_pct.\n- row 5 (U1, Comment empty, Description 'Op Amp Single SOIC-8'): refdes 'U' is deliberately absent from classify/router.py's _UNAMBIGUOUS_REFDES_PREFIX. The description-keyword table's IC_ANALOG pattern is `\\bop-?amp\\b` (router.py) -- this matches 'opamp' or 'op-amp' (zero or one literal hyphen) but NOT 'op amp' (a space is not matched by `-?`). 'Op Amp Single SOIC-8' contains a space, not a hyphen, between 'Op' and 'Amp', and matches no other keyword in the table -> category=UNKNOWN, confident=False -> guaranteed unresolved: category. This also triggers a (degraded, INFO) normalize_fallback attempt.\n- row 6 (J1, 'Header', 'Connector 2.54mm 4-pin'): refdes 'J' -> CONNECTOR, confident (unambiguous prefix, independent of description). CONNECTOR requires only pin_count, which no code path in requirement_builder.py populates -> guaranteed parameters.pin_count.\n- row 7 (no designator, Description 'Thermal pad adhesive', Qty 2): empty reference_designators (per altium_bom.expected.json row 7) -> primary_refdes='' -> no prefix match. 'thermal pad adhesive' matches no _DESCRIPTION_KEYWORDS entry -> category=UNKNOWN, confident=False -> guaranteed unresolved: category.\n- row 8 (D1, Comment 'LED', Description 'LED Red 0603'): refdes 'D' -> DIODE from prefix, but description keyword 'led' matches LED, and router.py's hint_category has an explicit special case ('description specializes diode to LED') resolving the disagreement to LED, confident=True. LED requires forward_voltage and forward_current (categories.py); neither appears anywhere in 'LED'/'LED Red 0603' -> guaranteed parameters.forward_voltage + parameters.forward_current.\n- row 9 (U2, Comment/Description/Footprint all empty, MPN 'MAX232ECWE+'): refdes 'U' ambiguous, description empty -> category=UNKNOWN, confident=False -> guaranteed unresolved: category.\nTally of guaranteed-unresolved rows: 0,1,2,3,4,5,6,7,8,9 = all 10 rows have at least one guaranteed unresolved reason -> unresolved_min=10 (an exact match in practice, but reported as a lower bound per this suite's convention of not asserting an upper bound where footprint-code recognition for RESC1608X55N-style already-IPC-form text was not independently traced). category_counts_guaranteed: resistor rows are 0, 1, 4 (R1-R4, R5, R6, all refdes-'R'-confident) = 3; capacitor rows are 2, 3 (C1-C2, C3) = 2; connector is row 6 (J1) = 1; led is row 8 (D1) = 1; unknown-category rows are 5, 7, 9 (U1, the mechanical/no-refdes row, U2) = 3. 3+2+1+1+3=10, matches normalized_rows."
+}

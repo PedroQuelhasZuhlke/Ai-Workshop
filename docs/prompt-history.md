@@ -38,3 +38,13 @@ With that in mind, discuss the implementation steps with me and start create res
 - /roadmap-m6-web-app
 
 - append an evidence summary of this whole conversation and store it in the #attachment:decision-log.md
+
+- /roadmap-m7-live-adapters
+
+- append an evidence summary of this whole conversation and store it in the #attachment:decision-log.md
+
+- /roadmap-m8-evals-hardening
+
+- append an evidence summary of this whole conversation and store it in the #attachment:decision-log.md
+
+- /roadmap-m8-evals-hardening

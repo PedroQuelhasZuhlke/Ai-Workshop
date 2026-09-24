@@ -1,0 +1,151 @@
+{
+  "case_id": "kicad_bom_hand_built_subset_sourcing_policy_evaluate",
+  "description": "Because the real ingest+normalize output for kicad_bom.csv is 100% unresolved (see kicad_bom_ingest_normalize_all_unresolved/case.json), this case starts one stage later: it transcribes the 4 already-hand-built, already-committed, already-reviewed NormalizedRequirement fixtures from tests/pipeline/test_sourcing_pipeline.py's `_requirements()` (electrical parameters and footprints copied verbatim from kicad_golden_snapshot.json's own exact-MPN entries, per that snapshot's README) into a standalone fixture, and exercises expand -> source -> policy -> evaluate against kicad_golden_snapshot.json. It proves the documented alternates/decoys for the resistor and capacitor requirements are surfaced and tiered correctly, and that no tier-3 candidate ever reaches the LLM.",
+  "chain": ["expand", "source", "policy", "evaluate"],
+  "inputs": {
+    "normalized_requirements": [
+      {
+        "schema_version": "v1",
+        "requirement_id": "req-r1",
+        "reference_designators": ["R1", "R2", "R3"],
+        "quantity_per_board": 1,
+        "category": "resistor",
+        "parameters": {
+          "resistance": { "value": "10000", "unit": "ohm", "raw_text": "10.0k", "source": "parsed" }
+        },
+        "footprint": {
+          "package_code": "RESC1608X55N",
+          "mounting": "smt",
+          "pin_count": 2,
+          "length_mm": "1.6",
+          "width_mm": "0.8",
+          "height_mm": "0.55",
+          "raw_text": "0603"
+        },
+        "specified_mpn": null,
+        "criticality": "standard",
+        "compliance_required": ["rohs"],
+        "notes": null,
+        "confidence": { "score": 0.95, "reasons": [] },
+        "unresolved": []
+      },
+      {
+        "schema_version": "v1",
+        "requirement_id": "req-c1",
+        "reference_designators": ["C1", "C2"],
+        "quantity_per_board": 1,
+        "category": "capacitor",
+        "parameters": {
+          "capacitance": { "value": "1E-7", "unit": "farad", "raw_text": "100n", "source": "parsed" }
+        },
+        "footprint": {
+          "package_code": "CAPC1005X55N",
+          "mounting": "smt",
+          "pin_count": 2,
+          "length_mm": "1.0",
+          "width_mm": "0.5",
+          "height_mm": "0.55",
+          "raw_text": "0402"
+        },
+        "specified_mpn": null,
+        "criticality": "standard",
+        "compliance_required": ["rohs"],
+        "notes": null,
+        "confidence": { "score": 0.95, "reasons": [] },
+        "unresolved": []
+      },
+      {
+        "schema_version": "v1",
+        "requirement_id": "req-u1",
+        "reference_designators": ["U1"],
+        "quantity_per_board": 1,
+        "category": "ic_analog",
+        "parameters": {},
+        "footprint": {
+          "package_code": "SOIC127P600X175-8N",
+          "mounting": "smt",
+          "pin_count": 8,
+          "pitch_mm": "1.27",
+          "length_mm": "4.9",
+          "width_mm": "3.9",
+          "height_mm": "1.75",
+          "raw_text": "SOIC-8"
+        },
+        "specified_mpn": null,
+        "criticality": "standard",
+        "compliance_required": ["rohs"],
+        "notes": null,
+        "confidence": { "score": 0.95, "reasons": [] },
+        "unresolved": []
+      },
+      {
+        "schema_version": "v1",
+        "requirement_id": "req-y1",
+        "reference_designators": ["Y1"],
+        "quantity_per_board": 1,
+        "category": "crystal",
+        "parameters": {
+          "frequency": { "value": "16000000", "unit": "hertz", "raw_text": "16MHz", "source": "parsed" }
+        },
+        "footprint": {
+          "package_code": "XTAL3225-4N",
+          "mounting": "smt",
+          "pin_count": 4,
+          "length_mm": "3.2",
+          "width_mm": "2.5",
+          "height_mm": "0.8",
+          "raw_text": "3225 4-pin"
+        },
+        "specified_mpn": null,
+        "criticality": "standard",
+        "compliance_required": ["rohs"],
+        "notes": null,
+        "confidence": { "score": 0.95, "reasons": [] },
+        "unresolved": []
+      }
+    ],
+    "catalog_snapshot": "fixtures/catalogs/kicad_golden_snapshot.json",
+    "llm": {
+      "candidate_rationale_fixture": "fixtures/llm/candidate_rationale/valid_nrnd_concern.json"
+    }
+  },
+  "not_extended_to": [
+    "resolve/plan/export -- see evals/README.md's 'Deliberate scope limits': hand-tracing price-break/MOQ/SPQ/attrition/shipping arithmetic across 8+ candidates to this suite's certainty standard was not achievable without executing planning code in this pass."
+  ],
+  "expect": {
+    "normalized_rows": 4,
+    "unresolved_min": 0,
+    "unresolved_max": 0,
+    "requirements_sourced": 4,
+    "candidates_by_requirement": {
+      "req-r1": {
+        "total": 4,
+        "tier3_mpns": { "RC0805FR-0710KL": "footprint_identity" },
+        "policy_clean_min": 3,
+        "policy_clean_max": 3
+      },
+      "req-c1": {
+        "total": 5,
+        "tier3_mpns": {
+          "GRM188R71C104KA01D": "footprint_identity",
+          "CL10B104KB8NNNC": "footprint_identity"
+        },
+        "policy_clean_min": 3,
+        "policy_clean_max": 3
+      },
+      "req-u1": {
+        "policy_clean_min": 1,
+        "tier3_mpns_if_present": { "LM358P": "footprint_identity" }
+      },
+      "req-y1": {
+        "policy_clean_min": 1
+      }
+    },
+    "filled_at_tier_0_or_1_min": 0,
+    "filled_at_tier_0_max": 0,
+    "tier0_candidates_total": 0,
+    "evaluate_blocking_count": 0,
+    "tier3_candidates_in_final_output": 0
+  },
+  "hand_verified_reasoning": "The 4 requirements above are a byte-for-byte transcription (Decimal fields as JSON strings, per fixtures/policy/README.md's convention) of tests/pipeline/test_sourcing_pipeline.py's `_requirements()` function, which is itself already-committed, already-reviewed hand-built fixture data (not generated by running normalize -- see that file's own module docstring explaining why). All 4 have `specified_mpn: null`.\n\nTier assignment is read directly from src/pcbpick/policy/rules.py `_assign_tier` (lines ~708-723): `blocking_failed` -> TIER_3; else if `specified.mpn == candidate.mpn` -> TIER_0 (impossible here since specified_mpn is null on every requirement, so TIER_0 is unreachable in this case -- hence tier0_candidates_total=0, filled_at_tier_0_max=0); else if `requirement.category in _IC_CATEGORIES` -> TIER_2 (applies to req-u1, ic_analog); else if `requirement.category in _TIER_2_MINIMUM_CATEGORIES` -> TIER_2 (applies to req-y1, crystal, per rules.py's own comment citing 'Crystal substitution is tier 2 minimum'); else if candidate lifecycle is UNKNOWN -> TIER_2; else -> TIER_1 (applies to req-r1/resistor and req-c1/capacitor candidates whose lifecycle is 'active' or 'nrnd').\n\nfootprint_identity (rules.py `_footprint_identity_rule`, lines ~73-94) fails whenever ANY of package_code/mounting/pin_count/pitch_mm/length_mm/width_mm/height_mm/thermal_pad differs between requirement and candidate footprint -- a blocking (non-informational) rule, so any mismatch forces TIER_3 regardless of every other rule passing.\n\nreq-r1 (resistor, 10k, footprint package_code RESC1608X55N): fixtures/catalogs/README.md's own 'Validation performed' section states, from an actual interpreter session against this exact snapshot: 'resistor parametric (no specified_mpn, 10k) -> all four 10k candidates (exact, Vishay alternative, near-dup -TR, 0805 wrong-footprint decoy)'. Reading kicad_golden_snapshot.json directly: RC0603FR-0710KL/CRCW060310K0FKEA/RC0603FR-0710KLTR all carry footprint package_code RESC1608X55N (identical to the requirement) and lifecycle 'active' -> TIER_1 each (3 policy-clean). RC0805FR-0710KL carries package_code RESC2012X70N (differs) -> footprint_identity fails -> TIER_3. Total=4, matches the README's count exactly.\n\nreq-c1 (capacitor, 100nF, footprint package_code CAPC1005X55N): the same README section states 'capacitor parametric (100nF) -> all five 100nF candidates across both 0402 and 0603 footprints (exact, KEMET alternative, AVX NRND decoy, and both real C4 parts as the natural wrong-footprint collision)'. Reading the snapshot: GRM155R71C104KA88D/C0402C104K4RACTU/0402YC104KAT2A all carry package_code CAPC1005X55N (identical) and lifecycle 'active'/'active'/'nrnd' respectively; the lifecycle rule (rules.py `_LIFECYCLE_RESULTS`) marks NRND `passed=True` ('flagged for review, not blocked') so 0402YC104KAT2A is NOT blocked by lifecycle -> all 3 are TIER_1. GRM188R71C104KA01D and CL10B104KB8NNNC both carry package_code CAPC1608X90N (differs) -> footprint_identity fails -> TIER_3 for both. Total=5, matches the README's count exactly.\n\nreq-u1 (ic_analog, LM358 SOIC-8) and req-y1 (crystal, 16MHz): the catalogs README's 'Validation performed' section only confirms search() results for the exact-MPN case for these two categories, not the parametric (no specified_mpn) case our hand-built requirements use, so an exact candidate count is not independently documented and is NOT asserted here (per evals/README.md's coarser-grain allowance). What IS certain from direct inspection of kicad_golden_snapshot.json: LM358DR/Texas Instruments shares footprint package_code SOIC127P600X175-8N (identical to req-u1) and lifecycle 'active', so if search() surfaces it at all (which it must, being the literal MPN this snapshot was built to source against per the catalogs README's BOM-row table) it passes footprint_identity and lifecycle, giving TIER_2 (ic_analog is in _IC_CATEGORIES) -- hence policy_clean_min=1. LM358P carries package_code DIP002P1000X400-8N (differs, THT not SMT) -> IF surfaced, footprint_identity fails -> TIER_3, listed as tier3_mpns_if_present rather than asserted-present. Same reasoning for req-y1: ABM3-16.000MHZ-D2Y-T/Abracon LLC shares footprint package_code XTAL3225-4N and lifecycle 'active' -> policy_clean_min=1.\n\ncandidate_rationale_fixture is set to the 'valid_nrnd_concern' fixture (fixtures/llm/candidate_rationale/valid_nrnd_concern.json), a schema-valid response for every FakeLLMClient call in this case (FakeLLMClient returns the same default_response for every call regardless of which candidate is being rationalized) -> evaluate_blocking_count=0 (no candidate_rationale_llm_failed issues) and tier3_candidates_in_final_output=0 is a structural invariant of EvaluateStage itself (it skips TIER_3 candidates before ever calling the LLM, per sourcing/evaluate.py and tests/stages/test_evaluate.py's test_tier3_candidate_is_skipped_and_never_sent_to_the_llm), true regardless of any candidate/tier count uncertainty above."
+}

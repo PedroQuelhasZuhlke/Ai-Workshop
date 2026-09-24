@@ -1,0 +1,29 @@
+{
+  "case_id": "valid_ic_widget_row",
+  "call_site": "normalize_fallback",
+  "description": "A schema-valid response for a row the deterministic parser found no category signal on at all. The model correctly declines to guess a category (returns null) and supplies only a footprint it could read from free text, tagging it llm_inferred. Proves the accept path: unresolved stays untouched by NormalizeStage's own logic (category was already unresolved before the call), confidence stays low, and nothing here is treated as engineer-confirmed.",
+
+  "request_variables": {
+    "row": {
+      "Value": "Widget-9000",
+      "Description": "Programmable timing widget, 16-SOIC",
+      "Footprint": ""
+    },
+    "category_hint": ""
+  },
+
+  "response_text": "{\"schema_version\": \"v1\", \"category\": null, \"parameters\": {}, \"footprint\": {\"package_code\": \"SOIC-16\", \"mounting\": \"smt\", \"pin_count\": 16, \"pitch_mm\": null, \"length_mm\": null, \"width_mm\": null, \"height_mm\": null, \"thermal_pad\": null, \"raw_text\": \"16-SOIC\"}, \"compliance_required\": [], \"notes\": \"Description states a 16-pin SOIC package but gives no electrical parameters or category; declining to guess a category.\"}",
+
+  "validates_against_response_model": true,
+
+  "expected_call_structured_outcome": {
+    "failed": false,
+    "attempts": 1
+  },
+
+  "expected_stage_issue": {
+    "code": null,
+    "severity": null,
+    "notes": "A successful fallback records no issue of its own on the happy path shown here. The requirement's category remains ComponentCategory.UNKNOWN (the fragment's category is null, so nothing is merged into that field) and NormalizeStage's own normalization_unresolved BLOCKING issue still fires for the row, exactly as it would have with no LLM client configured at all -- this fixture only proves the response is accepted and merged without raising, not that the row becomes resolved."
+  }
+}

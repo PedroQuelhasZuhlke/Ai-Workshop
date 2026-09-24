@@ -1,0 +1,83 @@
+{
+  "case_id": "malformed_invalid_json",
+  "call_site": "candidate_rationale",
+  "description": "The model returns non-JSON prose instead of a structured response. With a stateless FakeLLMClient returning this same text on every attempt, every retry fails identically, exhausting max_retries and degrading to failed=true. Proves the retry-then-degrade path for a call site whose failure is BLOCKING, not INFO (see fixtures/llm/README.md's severity-divergence note) -- this candidate already survived policy and would otherwise be presentable to an engineer.",
+
+  "request_variables": {
+    "requirement": {
+      "category": "capacitor",
+      "parameters": {
+        "capacitance": {
+          "value": "0.0000001",
+          "unit": "farad",
+          "tolerance_pct": "10",
+          "min": null,
+          "max": null,
+          "raw_text": "100n",
+          "source": "parsed"
+        }
+      },
+      "footprint": {
+        "package_code": "CAPC1005X55N",
+        "mounting": "smd",
+        "pin_count": 2,
+        "pitch_mm": null,
+        "length_mm": null,
+        "width_mm": null,
+        "height_mm": null,
+        "thermal_pad": null,
+        "raw_text": "0402"
+      },
+      "criticality": "standard"
+    },
+    "candidate": {
+      "mpn": "GRM155R71C104KA88D",
+      "manufacturer": "Murata",
+      "parameters": {
+        "capacitance": {
+          "value": "0.0000001",
+          "unit": "farad",
+          "tolerance_pct": "10",
+          "min": null,
+          "max": null,
+          "raw_text": "100nF",
+          "source": "catalog"
+        }
+      },
+      "footprint": {
+        "package_code": "CAPC1005X55N",
+        "mounting": "smd",
+        "pin_count": 2,
+        "pitch_mm": null,
+        "length_mm": null,
+        "width_mm": null,
+        "height_mm": null,
+        "thermal_pad": null,
+        "raw_text": "0402"
+      },
+      "lifecycle": "active",
+      "compliance": ["rohs"],
+      "substitution_tier": 0,
+      "policy_results": [
+        {"rule": "capacitance_tolerance", "passed": true},
+        {"rule": "footprint_identity", "passed": true},
+        {"rule": "dielectric_class_equivalence", "passed": true}
+      ]
+    }
+  },
+
+  "response_text": "This part looks like a solid match for the requirement, I'd recommend it.",
+
+  "validates_against_response_model": false,
+
+  "expected_call_structured_outcome": {
+    "failed": true,
+    "attempts": "max_retries + 2"
+  },
+
+  "expected_stage_issue": {
+    "code": "candidate_rationale_llm_failed",
+    "severity": "BLOCKING",
+    "notes": "candidate_rationale failure is BLOCKING because the candidate already survived policy (tier 0 here) and would otherwise be approvable -- an unexplained recommendation is a new problem this call introduces, not a restatement of an existing one. `rationale` stays None; substitution_tier and policy_results are unaffected."
+  }
+}

@@ -5,7 +5,8 @@ from pathlib import Path
 import click
 
 from pcbpick.errors import PcbPickError
-from pcbpick.pipeline.runner import PipelineRunner
+from pcbpick.pipeline.replay import replay_run
+from pcbpick.pipeline.runner import STAGES, PipelineRunner
 
 DEFAULT_RUNS_ROOT = Path("runs")
 
@@ -50,3 +51,41 @@ def resume_command(runner: PipelineRunner, run_id: str, from_stage: str) -> None
     except PcbPickError as exc:
         raise click.ClickException(str(exc)) from exc
     click.echo(f"resumed {run_id} from {from_stage}")
+
+
+@main.command("replay")
+@click.argument("run_id")
+@click.option(
+    "--from",
+    "from_stage",
+    default=STAGES[0].name,
+    show_default=True,
+    help="Stage name to replay from.",
+)
+@click.pass_obj
+def replay_command(runner: PipelineRunner, run_id: str, from_stage: str) -> None:
+    """Re-run RUN_ID's stage chain from FROM_STAGE and diff against stored artifacts.
+
+    Exits non-zero if any replayed stage's output differs from what was originally
+    stored -- replay divergence is the entire point of this command, so it must be
+    visible in the exit code, not just printed.
+    """
+    try:
+        result = replay_run(run_id, runs_root=runner.runs_root, from_stage=from_stage)
+    except PcbPickError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+    for stage_diff in result.stage_diffs:
+        if stage_diff.diff.is_identical:
+            click.echo(f"[{stage_diff.seq:03d}] {stage_diff.stage_name}: identical")
+            continue
+        click.echo(f"[{stage_diff.seq:03d}] {stage_diff.stage_name}: DIFFERS")
+        for change in stage_diff.diff.changes:
+            click.echo(
+                f"    {change.kind} {change.path}: before={change.before!r} after={change.after!r}"
+            )
+
+    if not result.is_identical:
+        raise click.ClickException(
+            f"replay of {run_id!r} from {from_stage!r} diverged from the stored artifacts"
+        )

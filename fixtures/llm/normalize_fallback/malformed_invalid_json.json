@@ -1,0 +1,29 @@
+{
+  "case_id": "malformed_invalid_json",
+  "call_site": "normalize_fallback",
+  "description": "The model returns text that is not valid JSON at all. pydantic's model_validate_json wraps the JSON decode failure in a ValidationError, the same exception type call_structured already catches -- with a stateless FakeLLMClient returning this same text on every attempt, every retry fails identically, exhausting max_retries and degrading to failed=true. Proves the retry-then-degrade path for a call site whose failure is INFO, not BLOCKING (see fixtures/llm/README.md's severity-divergence note).",
+
+  "request_variables": {
+    "row": {
+      "Value": "???",
+      "Description": "unreadable scan, value column corrupted",
+      "Footprint": ""
+    },
+    "category_hint": ""
+  },
+
+  "response_text": "I'm not able to determine the parameters for this row without more context.",
+
+  "validates_against_response_model": false,
+
+  "expected_call_structured_outcome": {
+    "failed": true,
+    "attempts": "max_retries + 2"
+  },
+
+  "expected_stage_issue": {
+    "code": "llm_fallback_unavailable",
+    "severity": "INFO",
+    "notes": "normalize_fallback failure is INFO because the row's category was already ComponentCategory.UNKNOWN and already in `unresolved` before this call was attempted (that is the precondition for attempting it at all) -- NormalizeStage's own BLOCKING normalization_unresolved issue already covers the row independent of this outcome, so the fallback's own failure is a no-op degrade, not a new blocking condition."
+  }
+}

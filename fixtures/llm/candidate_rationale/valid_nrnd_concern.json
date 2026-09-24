@@ -1,0 +1,83 @@
+{
+  "case_id": "valid_nrnd_concern",
+  "call_site": "candidate_rationale",
+  "description": "A schema-valid response with one flagged concern (NRND lifecycle). Proves the accept path: `rationale` is attached verbatim, `concerns` surfaces as one WARNING candidate_rationale_concern StageIssue per entry, and neither field changes the candidate's already-recorded substitution_tier or policy_results.",
+
+  "request_variables": {
+    "requirement": {
+      "category": "resistor",
+      "parameters": {
+        "resistance": {
+          "value": "10000",
+          "unit": "ohm",
+          "tolerance_pct": "1",
+          "min": null,
+          "max": null,
+          "raw_text": "10k 1%",
+          "source": "parsed"
+        }
+      },
+      "footprint": {
+        "package_code": "RESC1608X55N",
+        "mounting": "smd",
+        "pin_count": 2,
+        "pitch_mm": null,
+        "length_mm": null,
+        "width_mm": null,
+        "height_mm": null,
+        "thermal_pad": null,
+        "raw_text": "0603"
+      },
+      "criticality": "standard"
+    },
+    "candidate": {
+      "mpn": "RC0603FR-0710KL",
+      "manufacturer": "Yageo",
+      "parameters": {
+        "resistance": {
+          "value": "10000",
+          "unit": "ohm",
+          "tolerance_pct": "1",
+          "min": null,
+          "max": null,
+          "raw_text": "10.0kOhms",
+          "source": "catalog"
+        }
+      },
+      "footprint": {
+        "package_code": "RESC1608X55N",
+        "mounting": "smd",
+        "pin_count": 2,
+        "pitch_mm": null,
+        "length_mm": null,
+        "width_mm": null,
+        "height_mm": null,
+        "thermal_pad": null,
+        "raw_text": "0603"
+      },
+      "lifecycle": "nrnd",
+      "compliance": ["rohs"],
+      "substitution_tier": 1,
+      "policy_results": [
+        {"rule": "resistance_tolerance", "passed": true},
+        {"rule": "footprint_identity", "passed": true},
+        {"rule": "lifecycle_gate", "passed": true}
+      ]
+    }
+  },
+
+  "response_text": "{\"rationale\": \"Exact resistance and tolerance match at the required 0603 footprint, tier 1 substitution on manufacturer only.\", \"concerns\": [\"Candidate lifecycle is NRND -- confirm remaining stock or sample availability before committing.\"]}",
+
+  "validates_against_response_model": true,
+
+  "expected_call_structured_outcome": {
+    "failed": false,
+    "attempts": 1
+  },
+
+  "expected_stage_issue": {
+    "code": "candidate_rationale_concern",
+    "severity": "WARNING",
+    "notes": "One WARNING issue per entry in `concerns` (here, exactly one, for the NRND lifecycle). substitution_tier stays 1 and every policy_results entry stays exactly as recorded by the policy stage -- the concern is informational only."
+  }
+}
