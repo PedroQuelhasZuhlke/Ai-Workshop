@@ -43,9 +43,9 @@ def _load_expected() -> dict:
 def _run_normalize(fixture_name: str, llm_client: LLMClient | None = None):
     content = (FIXTURES_DIR / fixture_name).read_bytes()
     ctx = _make_ctx()
-    ingest_result = IngestStage().run(
-        IngestInput(file_name=fixture_name, content=content), ctx
-    ).output
+    ingest_result = (
+        IngestStage().run(IngestInput(file_name=fixture_name, content=content), ctx).output
+    )
     stage = NormalizeStage(llm_client=llm_client)
     return stage.run(ingest_result, ctx)
 
@@ -143,9 +143,7 @@ def test_llm_fallback_is_used_only_for_a_fully_unclassified_row_and_stays_unreso
     client = FakeLLMClient(model_id="fake-1", default_response=fake_response)
 
     result = _run_normalize(EDGE_CASES_FILE, llm_client=client)
-    unparseable = next(
-        r for r in result.output if r.notes and "Special order widget" in r.notes
-    )
+    unparseable = next(r for r in result.output if r.notes and "Special order widget" in r.notes)
 
     # A successful fallback may change the category, but the field stays in
     # `unresolved` and the confidence stays low — `llm_inferred` never satisfies a
@@ -186,9 +184,9 @@ def test_existing_ingest_fixtures_normalize_without_crashing(fixture_name: str) 
 def test_missing_required_parameter_is_blocking_and_unresolved() -> None:
     content = b"Designator,Value,Description\nR1,0R,Resistor jumper\n"
     ctx = _make_ctx()
-    ingest_result = IngestStage().run(
-        IngestInput(file_name="jumper.csv", content=content), ctx
-    ).output
+    ingest_result = (
+        IngestStage().run(IngestInput(file_name="jumper.csv", content=content), ctx).output
+    )
     result = NormalizeStage().run(ingest_result, ctx)
 
     requirement = result.output[0]

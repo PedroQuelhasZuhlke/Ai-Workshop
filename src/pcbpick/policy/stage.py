@@ -7,6 +7,7 @@ pure function of its inputs, per `.github/instructions/pipeline-stages.instructi
 from dataclasses import dataclass
 
 from pcbpick.contracts.candidate import PartCandidate
+from pcbpick.contracts.common import Evidence
 from pcbpick.contracts.enums import Lifecycle, SubstitutionTier
 from pcbpick.contracts.requirement import NormalizedRequirement
 from pcbpick.pipeline.context import StageContext
@@ -50,6 +51,23 @@ class PolicyStage:
 
         for requirement, pre_candidate in inp.pairs:
             tier, results = evaluate_candidate(requirement, pre_candidate, self._config)
+            # Carries `pre_candidate.snapshot_id`/`fetched_at` forward as `Evidence` --
+            # `PartCandidate` itself has no snapshot field, so this is the only way the
+            # lifecycle/compliance facts this stage gated on stay traceable past this
+            # boundary, per invariant 5 ("every supplier fact carries snapshot_id").
+            evidence: list[Evidence] = []
+            if pre_candidate.snapshot_id is not None:
+                evidence.append(
+                    Evidence(
+                        description=(
+                            f"lifecycle ({pre_candidate.lifecycle.value}) and compliance "
+                            f"({', '.join(t.value for t in pre_candidate.compliance) or 'none'}) "
+                            f"as of catalog snapshot fetched at {pre_candidate.fetched_at}"
+                        ),
+                        snapshot_id=pre_candidate.snapshot_id,
+                        field_name="lifecycle,compliance",
+                    )
+                )
             candidate = PartCandidate(
                 schema_version=pre_candidate.schema_version,
                 requirement_id=pre_candidate.requirement_id,
@@ -62,8 +80,8 @@ class PolicyStage:
                 substitution_tier=tier,
                 policy_results=results,
                 rationale=None,
-                evidence=[],
-                offers=[],
+                evidence=evidence,
+                offers=pre_candidate.offers,
             )
             output.append(candidate)
 
@@ -108,5 +126,7 @@ class PolicyStage:
                     )
                 )
 
-        output.sort(key=lambda c: (c.requirement_id, c.mpn))
+        # `manufacturer` makes this key total: the multi-manufacturer-MPN case (see
+        # `sourcing.assembly`'s module docstring) means `(requirement_id, mpn)` alone can tie.
+        output.sort(key=lambda c: (c.requirement_id, c.mpn, c.manufacturer))
         return StageResult(output=output, issues=issues)

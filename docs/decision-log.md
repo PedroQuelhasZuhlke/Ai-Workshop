@@ -545,3 +545,119 @@ offers with missing MOQ/SPQ.
 policy-clean candidates with rationale, fully offline — demonstrated case by case
 in the manual run above, not just via aggregate pass count. Awaiting explicit user
 approval before `/roadmap-m5-planning-export`.
+
+## 16. M5 — Planning and export (2026-09-23/24)
+
+**Precondition check:** M4 confirmed complete before starting — `expand → source →
+policy → evaluate` verified to produce ranked, policy-clean `PartCandidate`s with
+rationale (`tests/pipeline/test_sourcing_pipeline.py` green), per the M5 factory
+prompt's instruction to stop rather than proceed if M4 wasn't actually done.
+
+**Scope implemented:** the price-break/MOQ/SPQ order-quantity solver (with
+break-point buy-up proposed, never silently applied), assembly attrition for
+passives by part class, per-supplier shipping thresholds and subtotals, all five
+decision modes (`lowest_cost`, `fastest_delivery`, `fewest_suppliers`, `balanced`,
+`lowest_risk`) as pure scoring functions ending in `plan_hash` as a total
+tie-breaker, bounded multi-supplier split optimization, plan hashing, and
+Mouser/DigiKey/Farnell CSV/XLSX exporters with formula-injection neutralization.
+
+**Gap found before planning could start, fixed as a prerequisite:**
+`PartCandidate.offers` was **always empty** end-to-end — `SourceStage` (M4) never
+called the `SupplierAdapter.offers()` method the protocol already defined and
+`FixtureAdapter`/tests already exercised in isolation; `PolicyStage` separately
+hardcoded `offers=[]` when building each `PartCandidate`. Without this wired,
+`planning/` would have had no priced, purchasable data to solve against. Fixed by
+threading `list[SupplierOffer]` through `(requirement_id, CatalogPart, offers)`
+tuples from `SourceStage` into `sourcing/assembly.dedup_candidate_pairs` (unioning
+offers when hits dedup to the same candidate, sorted by `(supplier.value, sku)`),
+adding an `offers` field to `PrePolicyCandidate`, and having `PolicyStage` carry it
+through unchanged. No `contracts/` change was required — `PartCandidate.offers`
+already existed as a field, simply never populated.
+
+**Agent delegation, in order (per section 11's rule of thumb):**
+1. `stage-builder`, first pass — implemented `src/pcbpick/planning/` in full
+   (`config.py`, `attrition.py`, `order_quantity.py`, `shipping.py`,
+   `decision_modes.py`, `multi_supplier.py`, `plan_hash.py`, `stage.py`) plus the
+   offers-wiring prerequisite fix above. Ran out of turns before starting
+   `exporters/` or writing planning-specific tests.
+2. `stage-builder`, second pass (explicitly told what remained) — implemented
+   `src/pcbpick/exporters/` in full (versioned Mouser/DigiKey/Farnell templates,
+   `csv_writer.py`, `xlsx_writer.py`, `validation.py`, `stage.py`) and the bulk of
+   the test suite (`tests/unit/test_planning_math.py`,
+   `tests/stages/test_exporters.py`, extended `test_sourcing_stage.py`/
+   `test_policy.py`/`test_sourcing_pipeline.py` coverage for the offers wiring).
+   Did not add a stage-level `PlanningStage` integration test.
+3. Orchestrator (this session) — hand-wrote `tests/stages/test_planning.py`
+   (golden-path decision-mode divergence, `lowest_risk`'s hard filter, unfilled
+   requirements, `PlanWarning` generation, determinism), verified every manually
+   computed expected number against the actual run before trusting the test.
+4. `invariant-auditor` reviewed `planning/`, `exporters/`, and the sourcing/policy
+   wiring changes, read-only, for float money, non-deterministic ordering,
+   unsanitized export cells, and the six non-negotiable invariants.
+
+**Decision: two `stage-builder` passes, not one.** The first pass exhausted its
+turns mid-milestone (planning code complete, no exporters, no planning-specific
+tests). Rather than accept a partial deliverable, a second pass was launched with
+an explicit "here's what's already done, here's what remains, in priority order"
+brief, reading the first pass's own code first so conventions stayed consistent
+rather than reinventing them.
+
+**Decision: `plan_hash` is a computed function, not a `PurchasePlan` contract
+field.** `PurchasePlan` never carries its own hash — `SupplierExport.plan_hash` is
+the only place a hash is persisted, computed fresh via
+`pcbpick.planning.plan_hash.compute_plan_hash(plan)` whenever needed (including
+internally, as `decision_modes.py`'s final tie-breaker between equally-scored
+candidate plans). This avoided any `contracts/` change for the entire milestone.
+
+**Decision: approval is modeled as stage-local input fields, not a new
+`contracts/` type.** `ExportStageInput` carries `approved_by`/`approved_at`/
+`stale_offer_snapshot_ids`/`reviewed_high_tier_requirement_ids` directly — a
+persisted, append-only approval ledger is explicitly M6 scope
+(`docs/roadmap.md`). Inventing a contract type now for persistence that doesn't
+exist yet would have been the same premature-contract mistake M3/M4 both
+deliberately avoided for their own internal shapes.
+
+**Decision: the multi-supplier split always assigns each line to its cheapest
+offer within a candidate supplier subset, regardless of the active decision
+mode** — matching the procurement-math skill's algorithm verbatim ("assign each
+line to its cheapest offer within the subset" is stated as a subset-level step,
+not conditioned on mode). Decision modes differ only in *which subset* wins the
+final ranking. This was verified, not assumed: a hand-built scenario with a
+cheap/slow resistor supplier and a pricier/fast alternative was traced by hand
+through the subset-enumeration algorithm before writing
+`tests/stages/test_planning.py`, confirming `fastest_delivery` can only diverge
+from `lowest_cost` by winning a *smaller* subset that excludes the cheap-but-slow
+supplier entirely, never by reassigning a line within the same subset.
+
+**Invariant-auditor findings and resolutions** (1 BLOCKING, 2 SHOULD-FIX, 1 MINOR):
+
+| # | Sev | Finding | Resolution |
+|---|---|---|---|
+| 1 | BLOCKING | Export's "no stale offer" gate failed open by default: `ExportStageInput.stale_offer_snapshot_ids` defaulted to an empty set, and nothing re-checked staleness against the plan's own already-computed `PlanWarningKind.STALE_OFFER` warnings — a plan with a 200-day-old offer could export with zero `BLOCKING` issues if the caller simply didn't populate the set | `validation.check_no_stale_offers` now always cross-references `plan.warnings` for `STALE_OFFER` first, independent of caller input, with the caller-supplied set treated as an *additional* re-validation signal, not the sole source; added a test proving rejection with the caller's set left at its empty default |
+| 2 | SHOULD-FIX | Per-candidate snapshot provenance for lifecycle/compliance was checked once in `PolicyStage` (`candidate_missing_snapshot_provenance` warning) then discarded — no field on `PartCandidate` carried it past that point, so nothing downstream could trace "which snapshot said this part was ACTIVE/RoHS-compliant" | Attached as an `Evidence` entry (an existing `PartCandidate.evidence` field, not a new one) — no `contracts/` change needed |
+| 3 | SHOULD-FIX | Five sort keys (`sourcing/assembly.py`, `sourcing/stage.py`, `policy/stage.py`, `sourcing/evaluate.py`, `planning/multi_supplier.py`) used `(requirement_id, mpn)` only, which isn't total given the documented multi-manufacturer-MPN case `assembly.py`'s own docstring describes | Added `manufacturer` to all five keys so each is independently total, not reliant on an unasserted upstream ordering invariant |
+| 4 | MINOR | A fabricated `"USD"` placeholder can reach `PlanTotals.currency` when literally no offer anywhere in a plan is priced (every requirement ends up `unfilled`, `grand_total == 0`) | Left as-is per the auditor's own recommendation — negligible blast radius given the contract requires a non-optional currency; noted as a known limitation rather than worked around |
+
+**Verification performed:**
+- `pytest -q` — **347 passed** (340 after the second `stage-builder` pass and
+  lint/format cleanup, 347 after adding `test_planning.py` and the auditor-fix
+  regression test)
+- `ruff check` / `ruff format --check` on every file touched — clean (one round
+  of auto-fix needed for line-length/formatting in generated test files)
+- `mypy --strict` — no issues in 88 source files
+- Manual run of the hand-built decision-mode-divergence scenario, printed and
+  hand-verified against independently-computed expected numbers before trusting
+  the corresponding test: `lowest_cost`/`fewest_suppliers`/`balanced` all settled
+  on $25.50/30-day-lead (cheap `fixture` resistor + `digikey` for the rest);
+  `fastest_delivery` correctly paid more ($33.00) for a 5-day lead by excluding
+  the slow supplier's subset entirely; `lowest_risk` correctly dropped the
+  tier-2/NRND capacitor and the stale-offer crystal, leaving only the resistor
+  line and three `unfilled` requirements
+
+**Done-when criterion met:** the same inputs produce byte-identical plans and
+export files across runs — enforced by dedicated determinism tests
+(`test_planning_stage_is_deterministic_across_runs`,
+`test_export_stage_is_deterministic_across_runs`) that run each stage twice on
+identical input and assert byte-identical `model_dump_json()` output, matching
+M4's `test_full_chain_is_deterministic_across_runs` precedent. Awaiting explicit
+user approval before `/roadmap-m6-web-app`.

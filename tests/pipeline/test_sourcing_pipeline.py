@@ -193,6 +193,13 @@ def test_full_chain_never_surfaces_a_tier3_candidate_and_every_survivor_is_expla
     )
 
     assert final  # the hand-built requirements are sourceable and policy-clean candidates exist
+    # sourcing (M4) wires SupplierOffer end-to-end -- most candidates here get exactly one
+    # offer from the fixture catalog snapshot they're sourced from. Not every survivor,
+    # though: `C0402C104K4RACTU`'s only SKU has `moq`/`spq` both null, and
+    # `FixtureAdapter.offers()` deliberately returns `[]` rather than fabricate either (see
+    # its module docstring's "Known contract gap"), so at least one, not every, candidate
+    # is asserted here.
+    assert any(candidate.offers for candidate in final)
     # the parametric resistor/capacitor/crystal queries surface wrong-footprint decoys that
     # policy must reject at tier 3 -- confirm this scenario actually exercises that path.
     assert any(c.substitution_tier == SubstitutionTier.TIER_3 for c in policy_candidates)

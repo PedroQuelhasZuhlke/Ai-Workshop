@@ -31,8 +31,8 @@ from decimal import Decimal
 from pathlib import Path
 from random import Random
 
-from pcbpick.contracts.common import Footprint, MpnRef, ParameterValue
-from pcbpick.contracts.enums import ComponentCategory, SupplierId, ValueSource
+from pcbpick.contracts.common import Footprint, MpnRef, ParameterValue, PriceBreak
+from pcbpick.contracts.enums import ComponentCategory, Lifecycle, Packaging, SupplierId, ValueSource
 from pcbpick.contracts.offer import SupplierOffer
 from pcbpick.pipeline.context import PipelineConfig, StageContext
 from pcbpick.sourcing.stage import SourceStage
@@ -111,6 +111,24 @@ def test_exact_mpn_resistor_query_returns_single_candidate() -> None:
     assert [(c.mpn, c.manufacturer) for c in result.output] == [("RC0603FR-0710KL", "Yageo")]
 
 
+def test_exact_mpn_resistor_query_candidate_carries_correctly_populated_offers() -> None:
+    result = SourceStage([_adapter()]).run([_resistor_10k_query(specified=True)], _make_ctx())
+
+    candidate = result.output[0]
+    assert len(candidate.offers) == 1
+    offer = candidate.offers[0]
+    assert offer.supplier == SupplierId.FIXTURE
+    assert offer.sku == "YAG-RC0603FR-0710KL"
+    assert offer.stock == 850000
+    assert offer.moq == 1
+    assert offer.spq == 1
+    assert [(pb.quantity, pb.unit_price) for pb in offer.price_breaks] == [
+        (1, Decimal("0.0100")),
+        (1000, Decimal("0.0038")),
+    ]
+    assert offer.snapshot_id == "fixture-kicad-golden-2026-01-15"
+
+
 def test_parametric_resistor_query_does_not_collapse_near_duplicate_mpn() -> None:
     result = SourceStage([_adapter()]).run([_resistor_10k_query(specified=False)], _make_ctx())
 
@@ -139,9 +157,7 @@ def test_parametric_capacitor_query_returns_every_natural_collision() -> None:
 def test_crystal_query_yields_only_the_manufacturer_details_can_authoritatively_return() -> None:
     result = SourceStage([_adapter()]).run([_crystal_query()], _make_ctx())
 
-    assert [(c.mpn, c.manufacturer) for c in result.output] == [
-        ("ABM3-16.000MHZ-D2Y-T", "Abracon")
-    ]
+    assert [(c.mpn, c.manufacturer) for c in result.output] == [("ABM3-16.000MHZ-D2Y-T", "Abracon")]
     mismatch_issues = [
         issue
         for issue in result.issues
@@ -197,6 +213,69 @@ def _dummy_query(requirement_id: str = "REQ-GHOST") -> SourcingQuery:
         parameters={},
         footprint=Footprint(package_code="RESC1608X55N"),
         specified_mpn=None,
+    )
+
+
+_DUP_PART = CatalogPart(
+    mpn="DUP-MPN",
+    manufacturer="Acme",
+    category=ComponentCategory.RESISTOR,
+    parameters={},
+    footprint=Footprint(package_code="RESC1608X55N"),
+    lifecycle=Lifecycle.ACTIVE,
+    compliance=[],
+    skus=[],
+    snapshot_id="SNAP-DUP",
+    fetched_at=datetime(2026, 1, 1, tzinfo=UTC),
+)
+
+
+def _dup_offer(sku: str, supplier: SupplierId, price: str) -> SupplierOffer:
+    return SupplierOffer(
+        supplier=supplier,
+        sku=sku,
+        packaging=Packaging.CUT_TAPE,
+        stock=100,
+        moq=1,
+        spq=1,
+        price_breaks=[PriceBreak(quantity=1, unit_price=Decimal(price), currency="USD")],
+        lead_time_days=None,
+        snapshot_id="SNAP-DUP",
+        fetched_at=datetime(2026, 1, 1, tzinfo=UTC),
+    )
+
+
+@dataclass
+class _TwoHitsSamePartAdapter:
+    """Two search hits for the same (mpn, manufacturer) with different SKUs -- proves
+    `dedup_candidate_pairs` unions their offers rather than keeping only one."""
+
+    supplier_id: SupplierId = SupplierId.FIXTURE
+
+    def search(self, query: SourcingQuery) -> list[CatalogHit]:
+        del query
+        return [
+            CatalogHit(mpn="DUP-MPN", manufacturer="Acme", sku="SKU-B"),
+            CatalogHit(mpn="DUP-MPN", manufacturer="Acme", sku="SKU-A"),
+        ]
+
+    def details(self, mpn: str) -> CatalogPart | None:
+        del mpn
+        return _DUP_PART
+
+    def offers(self, sku: str, quantity: int) -> list[SupplierOffer]:
+        del quantity
+        return [_dup_offer(sku, SupplierId.FIXTURE, "0.01")]
+
+
+def test_two_hits_of_same_candidate_dedup_with_offers_unioned_and_sorted() -> None:
+    result = SourceStage([_TwoHitsSamePartAdapter()]).run([_dummy_query("REQ-DUP")], _make_ctx())
+
+    assert len(result.output) == 1
+    candidate = result.output[0]
+    assert [offer.sku for offer in candidate.offers] == ["SKU-A", "SKU-B"]
+    assert [(offer.supplier.value, offer.sku) for offer in candidate.offers] == sorted(
+        (offer.supplier.value, offer.sku) for offer in candidate.offers
     )
 
 

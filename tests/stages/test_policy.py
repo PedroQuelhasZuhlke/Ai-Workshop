@@ -12,15 +12,18 @@ from random import Random
 
 import pytest
 
-from pcbpick.contracts.common import Confidence, Footprint, ParameterValue
+from pcbpick.contracts.common import Confidence, Footprint, ParameterValue, PriceBreak
 from pcbpick.contracts.enums import (
     ComplianceTag,
     ComponentCategory,
     Criticality,
     Lifecycle,
+    Packaging,
     SubstitutionTier,
+    SupplierId,
     ValueSource,
 )
+from pcbpick.contracts.offer import SupplierOffer
 from pcbpick.contracts.policy import PolicyResult
 from pcbpick.contracts.requirement import NormalizedRequirement
 from pcbpick.pipeline.context import PipelineConfig, StageContext
@@ -129,6 +132,27 @@ def test_policy_stage_emits_blocking_issue_for_tier3_rejection() -> None:
     blocking = [i for i in result.issues if i.code == "candidate_rejected_tier3"]
     assert blocking
     assert all(i.severity == Severity.BLOCKING for i in blocking)
+
+
+def test_policy_stage_carries_pre_candidate_offers_through_unchanged() -> None:
+    requirement, candidate, _ = _load_case("known_good_tier0_identical_mpn")
+    offer = SupplierOffer(
+        supplier=SupplierId.FIXTURE,
+        sku="SKU-1",
+        packaging=Packaging.CUT_TAPE,
+        stock=100,
+        moq=1,
+        spq=1,
+        price_breaks=[PriceBreak(quantity=1, unit_price=Decimal("0.01"), currency="USD")],
+        lead_time_days=None,
+        snapshot_id="SNAP-1",
+        fetched_at=datetime(2026, 1, 1, tzinfo=UTC),
+    )
+    candidate = candidate.model_copy(update={"offers": [offer]})
+    stage = PolicyStage()
+    result = stage.run(PolicyStageInput(pairs=[(requirement, candidate)]), _make_ctx())
+
+    assert result.output[0].offers == [offer]
 
 
 def test_policy_stage_emits_derating_config_version_info() -> None:

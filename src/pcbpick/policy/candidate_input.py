@@ -3,7 +3,7 @@
 Policy-internal, not a contract type: `fixtures/policy/README.md` defines this exact
 shape (`schema_version`, `requirement_id`, `mpn`, `manufacturer`, `parameters`,
 `footprint`, `lifecycle`, `compliance`) as the pre-policy input. The fields
-`substitution_tier`, `policy_results`, `rationale`, `evidence`, and `offers` on
+`substitution_tier`, `policy_results`, `rationale`, and `evidence` on
 `PartCandidate` are this engine's *output* and are intentionally absent here — a new
 contract type isn't warranted until sourcing (M4) defines candidate assembly.
 
@@ -11,14 +11,20 @@ contract type isn't warranted until sourcing (M4) defines candidate assembly.
 `compliance` fields the engine gates on today (invariant 5: supplier facts carry
 snapshot provenance). They are `None`, never a stand-in, until M4 sourcing populates
 them for real.
+
+`offers` carries every `SupplierOffer` sourcing (M4) assembled for this candidate —
+see `pcbpick.sourcing.assembly.dedup_candidate_pairs` for how offers from multiple
+hits of the same deduped candidate are unioned and deterministically ordered. That
+milestone is complete now, so `offers` is no longer intentionally absent.
 """
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from pcbpick.contracts.common import Footprint, ParameterValue
 from pcbpick.contracts.enums import ComplianceTag, Lifecycle
+from pcbpick.contracts.offer import SupplierOffer
 
 
 class PrePolicyCandidate(BaseModel):
@@ -36,3 +42,4 @@ class PrePolicyCandidate(BaseModel):
     compliance: list[ComplianceTag]
     snapshot_id: str | None = None
     fetched_at: datetime | None = None
+    offers: list[SupplierOffer] = Field(default_factory=list)

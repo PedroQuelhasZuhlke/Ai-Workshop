@@ -28,9 +28,7 @@ class NormalizeStage:
         self._llm_client = llm_client
         self._max_llm_retries = max_llm_retries
 
-    def run(
-        self, inp: IngestResult, ctx: StageContext
-    ) -> StageResult[list[NormalizedRequirement]]:
+    def run(self, inp: IngestResult, ctx: StageContext) -> StageResult[list[NormalizedRequirement]]:
         del ctx  # normalize needs no clock or randomness
 
         requirements: list[NormalizedRequirement] = []

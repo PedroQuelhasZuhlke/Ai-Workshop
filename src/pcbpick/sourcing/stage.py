@@ -26,6 +26,7 @@ manufacturer are unavailable through this adapter, which is true even though
 `details()` did technically return *something*.
 """
 
+from pcbpick.contracts.offer import SupplierOffer
 from pcbpick.pipeline.context import StageContext
 from pcbpick.pipeline.results import Severity, StageIssue, StageResult
 from pcbpick.policy.candidate_input import PrePolicyCandidate
@@ -52,7 +53,7 @@ class SourceStage:
         issues: list[StageIssue] = []
 
         for query in inp:
-            pairs: list[tuple[str, CatalogPart]] = []
+            pairs: list[tuple[str, CatalogPart, list[SupplierOffer]]] = []
 
             for adapter in self._adapters:
                 for hit in adapter.search(query):
@@ -95,7 +96,11 @@ class SourceStage:
                         )
                         continue
 
-                    pairs.append((query.requirement_id, part))
+                    # quantity=1 is a nominal lookup value -- the fixture adapter ignores
+                    # it and always returns the full pinned price-break ladder; a future
+                    # adapter that filters by quantity would still return usable offers.
+                    offers = adapter.offers(hit.sku, quantity=1)
+                    pairs.append((query.requirement_id, part, offers))
 
             candidates = dedup_candidate_pairs(pairs)
             if not candidates:
@@ -112,5 +117,7 @@ class SourceStage:
                 )
             output.extend(candidates)
 
-        output.sort(key=lambda c: (c.requirement_id, c.mpn))
+        # `manufacturer` makes this key total: the multi-manufacturer-MPN case (see
+        # `sourcing.assembly`'s module docstring) means `(requirement_id, mpn)` alone can tie.
+        output.sort(key=lambda c: (c.requirement_id, c.mpn, c.manufacturer))
         return StageResult(output=output, issues=issues)

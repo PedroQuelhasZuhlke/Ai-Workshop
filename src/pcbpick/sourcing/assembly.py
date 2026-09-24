@@ -31,15 +31,28 @@ their `CatalogPart` payload disagrees (should never happen from one well-formed
 snapshot — the same MPN+manufacturer combination describing two different parts
 would itself be a data error), the first one encountered in the given input order
 wins. This is a defensive-only path, not an expected one.
+
+## Offer union
+
+Every pair also carries the `SupplierOffer`s the `source` stage fetched for that
+specific hit's SKU. When two hits (e.g. two SKUs of the same manufacturer part)
+dedup to the same candidate key, their offers are unioned rather than one winning
+over the other — a candidate should expose every purchasable SKU sourcing found for
+it, not just the first one. The union is keyed on `(supplier.value, sku)` and sorted
+on that same key before being attached, so the result never depends on dict/set
+iteration order or on the order `pairs` arrived in.
 """
 
+from pcbpick.contracts.offer import SupplierOffer
 from pcbpick.contracts.version import SCHEMA_VERSION
 from pcbpick.policy.candidate_input import PrePolicyCandidate
 from pcbpick.sourcing.manufacturers import normalize_manufacturer
 from pcbpick.sourcing.types import CatalogPart
 
 
-def build_candidate(requirement_id: str, part: CatalogPart) -> PrePolicyCandidate:
+def build_candidate(
+    requirement_id: str, part: CatalogPart, offers: list[SupplierOffer] | None = None
+) -> PrePolicyCandidate:
     """Maps one fetched `CatalogPart` to a `PrePolicyCandidate` for `requirement_id`."""
     return PrePolicyCandidate(
         schema_version=SCHEMA_VERSION,
@@ -52,18 +65,20 @@ def build_candidate(requirement_id: str, part: CatalogPart) -> PrePolicyCandidat
         compliance=part.compliance,
         snapshot_id=part.snapshot_id,
         fetched_at=part.fetched_at,
+        offers=offers or [],
     )
 
 
 def dedup_candidate_pairs(
-    pairs: list[tuple[str, CatalogPart]],
+    pairs: list[tuple[str, CatalogPart, list[SupplierOffer]]],
 ) -> list[PrePolicyCandidate]:
-    """Collapses `(requirement_id, CatalogPart)` pairs into distinct candidates.
+    """Collapses `(requirement_id, CatalogPart, offers)` pairs into distinct candidates.
 
-    See the module docstring for the exact dedup key and the two cases that are
-    deliberately *not* collapsed. The input is sorted internally before dedup so the
-    result never depends on the order `pairs` arrives in — this function does not
-    assume its caller already sorted it.
+    See the module docstring for the exact dedup key, the two cases that are
+    deliberately *not* collapsed, and how offers are unioned across pairs that do
+    share a key. The input is sorted internally before dedup so the result never
+    depends on the order `pairs` arrives in — this function does not assume its
+    caller already sorted it.
     """
     ordered = sorted(
         pairs,
@@ -71,11 +86,26 @@ def dedup_candidate_pairs(
     )
 
     candidates_by_key: dict[tuple[str, str, str], PrePolicyCandidate] = {}
-    for requirement_id, part in ordered:
-        candidate = build_candidate(requirement_id, part)
-        key = (candidate.requirement_id, candidate.mpn, candidate.manufacturer)
-        candidates_by_key.setdefault(key, candidate)  # first-encountered wins; see docstring
+    offers_by_key: dict[tuple[str, str, str], dict[tuple[str, str], SupplierOffer]] = {}
+    for requirement_id, part, offers in ordered:
+        key = (
+            requirement_id,
+            part.mpn,
+            normalize_manufacturer(part.manufacturer),
+        )
+        candidates_by_key.setdefault(
+            key, build_candidate(requirement_id, part)
+        )  # first-encountered wins for non-offer fields; see docstring
+        offer_map = offers_by_key.setdefault(key, {})
+        for offer in offers:
+            offer_map[(offer.supplier.value, offer.sku)] = offer
 
-    result = list(candidates_by_key.values())
-    result.sort(key=lambda c: (c.requirement_id, c.mpn))
+    result: list[PrePolicyCandidate] = []
+    for key, candidate in candidates_by_key.items():
+        merged_offers = [offers_by_key[key][offer_key] for offer_key in sorted(offers_by_key[key])]
+        result.append(candidate.model_copy(update={"offers": merged_offers}))
+
+    # `manufacturer` makes this key total on its own -- see the dedup rule above,
+    # the multi-manufacturer-MPN case means `(requirement_id, mpn)` alone can tie.
+    result.sort(key=lambda c: (c.requirement_id, c.mpn, c.manufacturer))
     return result

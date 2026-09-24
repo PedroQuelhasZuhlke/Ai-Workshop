@@ -95,9 +95,7 @@ class EvaluateStage:
         self._llm_client = llm_client
         self._max_llm_retries = max_llm_retries
 
-    def run(
-        self, inp: EvaluateStageInput, ctx: StageContext
-    ) -> StageResult[list[PartCandidate]]:
+    def run(self, inp: EvaluateStageInput, ctx: StageContext) -> StageResult[list[PartCandidate]]:
         del ctx  # evaluate needs no clock or randomness
 
         output: list[PartCandidate] = []
@@ -162,5 +160,7 @@ class EvaluateStage:
                     )
                 )
 
-        output.sort(key=lambda c: (c.requirement_id, c.mpn))
+        # `manufacturer` makes this key total: the multi-manufacturer-MPN case (see
+        # `sourcing.assembly`'s module docstring) means `(requirement_id, mpn)` alone can tie.
+        output.sort(key=lambda c: (c.requirement_id, c.mpn, c.manufacturer))
         return StageResult(output=output, issues=issues)
