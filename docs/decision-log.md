@@ -867,4 +867,140 @@ executed and its output inspected in this session, not inferred.
 **Net test count progression this session:** 347 (M5 baseline) → 360 (9 full-flow/
 authorization tests + 4 security-regression tests, 13 total new in `tests/api/`).
 
+## 19. M7 — Live supplier adapters (2026-09-24)
+
+**Precondition check:** M4–M6 confirmed complete before starting — the
+`SupplierAdapter` protocol, `FixtureAdapter`, and the web app were all read and
+verified present (`src/pcbpick/sourcing/suppliers/{protocol,fixture}.py`,
+`src/pcbpick/api/`, `web/`) before any M7 code was written, per the M7 factory
+prompt's stop-if-not-done instruction.
+
+**Scope implemented:** live `SupplierAdapter` implementations for Mouser, DigiKey,
+and Farnell behind the existing protocol; credential handling via a new
+`pcbpick.config.secrets` module (`Credentials` value object, env-var-backed
+`load_credentials()`); a shared rate-limiting/retry-with-backoff/circuit-breaking
+helper (`sourcing/suppliers/resilience.py`); content-addressed snapshot writing on
+every live fetch (`sourcing/suppliers/snapshots.py`); a pure freshness check
+(`sourcing/freshness.py`) plus a `revalidate_if_stale` pre-export re-fetch entry
+point on the shared live-adapter base class; and a config/env-gated switch
+(`api/orchestrator.default_adapters(..., use_live_suppliers=...)`,
+`PCBPICK_USE_LIVE_SUPPLIERS`) that swaps fixture for live sourcing without
+touching `SourceStage`/`PolicyStage`/`EvaluateStage` or anything upstream of
+`source`.
+
+**Agent delegation, in order (per §11's rule of thumb, plus the M7 prompt's own
+explicit two-step process):**
+1. `supplier-adapter-builder` implemented all of the above in one pass: the three
+   adapters, `config/secrets.py`, `resilience.py`, `snapshots.py`, `freshness.py`,
+   the shared `live_base.py` HTTP/logging/snapshot orchestration, the
+   `orchestrator.py` wiring, and the full `tests/sourcing/` suite. Also moved
+   `httpx` from the dev dependency group to `[project] dependencies` in
+   `pyproject.toml`, since it's now a runtime dependency, not just a test one.
+2. `invariant-auditor` reviewed the result, read-only, three times in sequence
+   (findings and fixes below) — this milestone's own instructions treat it as the
+   highest-risk pass in the roadmap and direct that any finding be treated as
+   blocking.
+
+**Bugs found and fixed by the orchestrating session before the first audit pass**
+(caught by actually running the toolchain, not by inspection alone):
+- `map_rohs_compliance`'s exact-string match missed DigiKey/Mouser's real
+  `"RoHS Compliant"` value (only Farnell's bare `"Compliant"` matched), causing 2
+  test failures on the first full-suite run.
+- A `mypy --strict` `no-any-return` error in `resilience.py`'s backoff-delay
+  calculation, plus several `ruff` line-length/import-order issues and a B008
+  mutable-default-argument pattern (`RetryConfig()`/`CircuitBreakerConfig()` as
+  parameter defaults) — fixed with explicit type annotations and `None`-default
+  resolution inside `__init__`, no behavior change.
+- An apparent XLSX-export byte-determinism test failure
+  (`test_export_stage_is_deterministic_across_runs`) was investigated by
+  stashing the M7 changes and re-running the full suite on the pre-M7 codebase
+  (clean, 360/360) and re-running the post-M7 suite three times in a row
+  (2 failures, then 0, then 0) — concluded to be a pre-existing, order/hash-seed-
+  dependent flake unrelated to this milestone's changes, not a new defect, and
+  left alone rather than "fixed" with no reproducible root cause.
+
+**Invariant-auditor findings and resolutions, across three review passes:**
+
+*Pass 1 — 3 BLOCKING:*
+
+| # | Finding | Resolution |
+|---|---|---|
+| 1 | `map_rohs_compliance`'s "non-compliant" exclusion only matched three literal substrings, so a variant like `"Non-RoHS Compliant"` fell through to the positive `"compliant" in lowered` check and was scored compliant | Replaced with a regex checked before the positive match |
+| 2 | `ResilientCaller._backoff_delay` honored a supplier-controlled `Retry-After` header with no ceiling — a misconfigured/hostile supplier could stall the whole sourcing chain for an arbitrary duration | Clamped `retry_after_seconds` to `self._retry.max_delay_seconds`, same ceiling as exponential backoff |
+| 3 | `MouserAdapter` unconditionally stamped every SKU `Packaging.CUT_TAPE` with zero supplier signal behind it (Mouser's API states no packaging field at all) | Emits `packaging: None` instead; `build_catalog_part`/`build_offer` in `live_base.py` drop any sku/offer whose packaging is `None`, mirroring the existing moq/spq-omission precedent — `search()`/`CatalogHit` unaffected since it carries no packaging field |
+
+*Pass 2 — found the pass-1 fixes incomplete, 2 new BLOCKING:*
+
+| # | Finding | Resolution |
+|---|---|---|
+| 4 | The pass-1 regex still required a word boundary immediately after "non"/"not", so concatenated forms (`"NonCompliant"`, `"NotRohsCompliant"`) bypassed it entirely | Dropped the trailing `\b`, widened the separator character class to include `_`; added direct unit tests (`tests/sourcing/test_live_base.py`) for both spaced and concatenated negative forms across all three adapters' real field values |
+| 5 | DigiKey/Farnell still fell back to `Packaging.BULK` when their packaging field was missing or unrecognized — the same fabrication just ruled unacceptable for Mouser, merely rationalized as "least specific member" instead of fixed | `_map_packaging` in both adapters now returns `Packaging \| None`; `None` when unrecognized/absent, handled by the same `build_catalog_part`/`build_offer` omission logic; regression tests added for missing `PackageType`/`packOption` proving `part.skus == []` and `offers() == []` rather than a fabricated packaging value |
+
+*Pass 3 — 0 BLOCKING, verdict "clean"; 1 non-blocking item fixed anyway:*
+- `mouser.py`'s `_price_str` caught an unparseable price string (e.g. a
+  hypothetical `"Call for Price"`) and returned the literal `"0"` — a fabricated
+  free-part price that could win a lowest-cost comparison outright. Fixed to
+  return `None` and drop that price break entirely, matching the "never use `0`
+  as a stand-in for unknown" convention used everywhere else in the adapter.
+- Also applied as a non-blocking cleanup flagged in pass 1: DigiKey/Farnell parsed
+  their JSON responses with `httpx.Response.json()` (Python `float` for price
+  fields) before converting to `Decimal` via `str(float)` — a float-for-money
+  anti-pattern. Fixed by parsing with `json.loads(response.text,
+  parse_float=Decimal)` in both adapters' `_extract_products`, so price values
+  never transit through `float`.
+
+**Test-suite churn caused by the Mouser/DigiKey/Farnell packaging-omission fix:**
+because Mouser's response has no packaging field at all, every Mouser sku/offer
+is now genuinely unrepresentable end to end — `test_mouser_adapter.py` was
+rewritten so its stock/moq/spq/price-break field-mapping assertions run directly
+against the private `_raw_part_from_mouser_json` function (proving the parsing
+logic itself is correct) rather than through `details()`/`offers()`, which can
+never expose a sku for any Mouser part until the `Packaging` enum gets an
+"unspecified" member. `tests/sourcing/test_live_adapter_revalidation.py`'s
+successful-refetch case was switched from `MouserAdapter` to `FarnellAdapter`,
+since Farnell states a real packaging field and Mouser structurally cannot.
+
+**Contract gap found and deliberately not fixed:** `Packaging` (an enum in
+`contracts/enums.py`) has no "unspecified"/"unknown" member, and `CatalogSku.
+packaging`/`SupplierOffer.packaging` are both non-optional. Three separate code
+paths (Mouser always, DigiKey/Farnell on missing or unrecognized supplier text)
+have no honest value to put there — the resolution taken throughout this
+milestone is to omit the sku/offer entirely rather than fabricate an enum member,
+exactly mirroring the pre-existing `SupplierOffer.moq`/`.spq` gap `fixture.py`
+already documented in M4. Widening `Packaging` with an "unspecified" member is a
+minor-version contract change under `contracts.instructions.md` — flagged for a
+`contract-architect` pass, not worked around here, and out of this milestone's
+delegated scope (`supplier-adapter-builder`/`invariant-auditor` only).
+
+**Verification performed (re-run after every fix round, not just once):**
+- `pytest -q` — progression **418 → 420 → 422 → 427 → 428 passed** across the
+  bug-fix and three audit-fix rounds (360 M6 baseline + 68 new in
+  `tests/sourcing/`)
+- `ruff check src tests` — clean after each round (multiple rounds needed manual
+  line-length/import-order/B008 fixes beyond `--fix`'s auto-fixable subset)
+- `mypy` (strict, `src`-only per `pyproject.toml`'s `files = ["src"]`) — clean
+  after each round; confirmed the correct scope by also running the unscoped
+  `mypy .` once and observing 63 pre-existing, out-of-scope test-file errors
+  unrelated to this milestone, left untouched
+- Confirmed via `git status --porcelain` that changes stayed within
+  `sourcing/suppliers/`, the new `config/secrets.py`, `sourcing/freshness.py`,
+  `api/orchestrator.py`'s adapter-selection wiring, `pyproject.toml`/`uv.lock`,
+  and `tests/sourcing/` — nothing else touched
+- Confirmed by direct grep across `tests/` that every adapter test builds an
+  `httpx.Client(transport=httpx.MockTransport(...))` — no live socket reachable
+  from any test
+- Confirmed credential redaction end to end: `Credentials.__repr__`/`__str__`
+  redact both fields, `CredentialsNotFoundError` messages name only the env var,
+  `redact_headers()` masks every credential-bearing header name, and dedicated
+  `test_credential_redaction.py` tests assert the literal secret string never
+  appears in any captured log record for all three adapters
+
+**Done-when criterion met:** `api/orchestrator.py`'s `default_adapters()` takes an
+opt-in `use_live_suppliers` flag (or `PCBPICK_USE_LIVE_SUPPLIERS` env var) that
+swaps `FixtureAdapter` for the three live adapters; `SourceStage`, `PolicyStage`,
+`EvaluateStage`, and every stage upstream of `source` were confirmed untouched by
+this milestone. Awaiting explicit user approval before `/roadmap-m8-evals-
+hardening`.
+
+
 

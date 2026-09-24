@@ -16,12 +16,16 @@ it reuses `classify.router.missing_required_parameters`, the same pure function
 `normalize` itself uses, rather than duplicating category rules.
 """
 
+import os
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from random import Random
 
+import httpx
+
 from pcbpick.classify.router import missing_required_parameters
+from pcbpick.config.secrets import load_credentials
 from pcbpick.contracts.candidate import PartCandidate
 from pcbpick.contracts.common import ParameterValue
 from pcbpick.contracts.enums import ComplianceTag, ComponentCategory, ExportFormat, SupplierId
@@ -39,17 +43,78 @@ from pcbpick.policy.stage import PolicyStage, PolicyStageInput
 from pcbpick.sourcing.evaluate import EvaluateStage, EvaluateStageInput
 from pcbpick.sourcing.expand import ExpandStage
 from pcbpick.sourcing.stage import SourceStage
+from pcbpick.sourcing.suppliers.digikey import DigiKeyAdapter
+from pcbpick.sourcing.suppliers.farnell import FarnellAdapter
 from pcbpick.sourcing.suppliers.fixture import FixtureAdapter
+from pcbpick.sourcing.suppliers.mouser import MouserAdapter
 from pcbpick.sourcing.suppliers.protocol import SupplierAdapter
+
+_LIVE_SUPPLIERS_ENV_VAR = "PCBPICK_USE_LIVE_SUPPLIERS"
+_DEFAULT_SNAPSHOT_ROOT = Path("runs/snapshots")
 
 
 def make_stage_context(run_id: str, now: datetime) -> StageContext:
     return StageContext(run_id=run_id, now=now, rng=Random(run_id), config=PipelineConfig())
 
 
-def default_adapters(catalog_snapshot_paths: tuple[str, ...]) -> list[SupplierAdapter]:
-    """Fixture-only, matching M4/M5's fixtures-first precedent. Live adapters are M7."""
-    return [FixtureAdapter([Path(p) for p in catalog_snapshot_paths])]
+def default_adapters(
+    catalog_snapshot_paths: tuple[str, ...],
+    *,
+    use_live_suppliers: bool | None = None,
+) -> list[SupplierAdapter]:
+    """Fixture-only by default, matching M4/M5's fixtures-first precedent.
+
+    Pass `use_live_suppliers=True`, or set `PCBPICK_USE_LIVE_SUPPLIERS=1`, to source
+    from Mouser/DigiKey/Farnell instead — every existing caller that doesn't pass the
+    new keyword continues to get exactly the old fixture-only behavior. Nothing
+    upstream of `source` (`SourceStage`, `PolicyStage`, `EvaluateStage`, ...) changes
+    either way, per this milestone's "done when" criterion.
+    """
+    live_enabled = use_live_suppliers
+    if live_enabled is None:
+        live_enabled = os.environ.get(_LIVE_SUPPLIERS_ENV_VAR, "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+        }
+    if not live_enabled:
+        return [FixtureAdapter([Path(p) for p in catalog_snapshot_paths])]
+    return live_adapters()
+
+
+def live_adapters(
+    *,
+    snapshot_root: Path | None = None,
+    http_client: httpx.Client | None = None,
+    run_id: str | None = None,
+) -> list[SupplierAdapter]:
+    """Constructs Mouser/DigiKey/Farnell adapters, credentials loaded from the secret store.
+
+    `http_client` defaults to a real `httpx.Client` per adapter; tests never call this
+    function without substituting one backed by `httpx.MockTransport`.
+    """
+    root = snapshot_root or _DEFAULT_SNAPSHOT_ROOT
+    client = http_client or httpx.Client()
+    return [
+        MouserAdapter(
+            credentials=load_credentials(SupplierId.MOUSER),
+            http_client=client,
+            snapshot_dir=root / "mouser",
+            run_id=run_id,
+        ),
+        DigiKeyAdapter(
+            credentials=load_credentials(SupplierId.DIGIKEY),
+            http_client=client,
+            snapshot_dir=root / "digikey",
+            run_id=run_id,
+        ),
+        FarnellAdapter(
+            credentials=load_credentials(SupplierId.FARNELL),
+            http_client=client,
+            snapshot_dir=root / "farnell",
+            run_id=run_id,
+        ),
+    ]
 
 
 def run_ingest(
