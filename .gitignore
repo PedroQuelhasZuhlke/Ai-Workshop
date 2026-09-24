@@ -11,6 +11,9 @@ build/
 
 # Local run artifacts (see .github/copilot-instructions.md)
 runs/
+mapping_profiles/
+*.db
 
 # Node (web/ frontend, later milestones)
 node_modules/
+*.tsbuildinfo

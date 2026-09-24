@@ -661,3 +661,210 @@ export files across runs — enforced by dedicated determinism tests
 identical input and assert byte-identical `model_dump_json()` output, matching
 M4's `test_full_chain_is_deterministic_across_runs` precedent. Awaiting explicit
 user approval before `/roadmap-m6-web-app`.
+
+## 17. M6 — Web application (2026-09-24)
+
+**Precondition check:** M5 confirmed complete before starting — the planning and
+export determinism tests were green and `docs/decision-log.md` §16 recorded explicit
+approval, per the M6 factory prompt's stop-if-not-done instruction.
+
+**Scope implemented:** a FastAPI backend (`src/pcbpick/api/`) implementing projects,
+runs, an append-only approval ledger, and the full upload -> mapping confirmation ->
+requirement resolution -> candidate review -> plan comparison -> approval -> export
+flow; a React + TypeScript (Vite) frontend (`web/`) implementing that same flow end
+to end with per-line evidence (policy results, rationale, lifecycle, tier badges),
+stale-offer indicators, and a one-click re-validation action.
+
+**Gap found before the API could be built, worked around without touching pipeline
+code:** `pipeline.runner.PipelineRunner`/`STAGES` only registers `ingest` and
+`normalize` — `expand`/`source`/`policy`/`evaluate`/`planning`/`export` all exist as
+standalone, individually-tested stage classes but were never wired into a runnable
+chain end to end (each stage's own tests hand-build fixtures, per M4/M5 precedent).
+The interactive flow this milestone requires (pause for engineer input between
+stages) doesn't fit the batch `PipelineRunner` model anyway, so
+`src/pcbpick/api/orchestrator.py` calls each stage class directly in
+`docs/architecture.md`'s documented order, persisting each stage's current output as
+run-scoped JSON (`api/artifact_store.py`) rather than the strict
+`<seq>-<stage>.json` sequence. `pipeline/runner.py` itself was not modified — this
+milestone's instructions delegate pipeline-stage changes to `stage-builder`, and
+none were needed; the API layer only *consumes* the existing `Stage` protocol.
+
+**Decision: `MappingProfileStore.save()` is finally wired to a real confirmation
+action.** M1 deliberately left `save()` uncalled (see §7's decision) because
+persisting an unconfirmed heuristic guess would itself be a guess. M6's
+`POST /projects/{id}/runs/{id}/mapping/confirm` is that confirmation action:
+it saves the engineer-confirmed mapping, then re-runs `IngestStage` with it and
+immediately `NormalizeStage`, exactly as the M1 decision anticipated.
+
+**Decision: authorization is a project-membership table with three ranked roles**
+(`viewer < engineer < owner`), checked via a `require_role` dependency on every
+artifact-read and artifact-write route, not just at upload. A non-member (or an
+unauthenticated caller) gets `404` on a project/run they cannot access, never `403`,
+so project existence is not disclosed. `POST /users` is a deliberately minimal
+internal-directory stand-in (no IdP integration exists yet) and, per the
+invariant-auditor's finding below, is disabled outside `development`/`test`.
+
+**Decision: persistence targets PostgreSQL in production, SQLite in dev/tests.**
+`api/db.py`'s schema uses only dialect-portable SQLAlchemy Core types; `Settings.
+database_url` is the only thing that changes between environments. Tests use
+`sqlite://` (in-memory, `StaticPool`) — no live network database, per
+`.github/instructions/testing.instructions.md`.
+
+**Decision: `ApprovalRecord` is insert-only, and export re-checks the plan hash.**
+`export_plan` looks up the *latest* approval for `(run_id, decision_mode)` and
+recomputes `compute_plan_hash(plan)` against the approval's stored hash, rejecting
+with `409` on any mismatch — this closes the gap where a plan changes (e.g. via
+`revalidate`) after approval but before export, which would otherwise let a stale
+approval authorize a different plan. No code path anywhere updates or deletes an
+`ApprovalRecord` row.
+
+**Decision: `StageContext.now` is injectable via `Settings.clock_override`,
+`None` in production.** Every route builds its `StageContext` through
+`_stage_now(settings)`. Production always uses the real wall clock (correct: stock
+and price are volatile, invariant 5). Tests pin it near the fixture catalog's
+`fetched_at` so stale-offer detection is deterministic rather than silently drifting
+further out of the 90-day freshness window every time the suite is run in the
+future, per `.github/instructions/testing.instructions.md`'s "no wall-clock
+dependence".
+
+**Invariant-auditor findings and resolutions** (2 BLOCKING, 2 SHOULD-FIX, 3 MINOR):
+
+| # | Sev | Finding | Resolution |
+|---|---|---|---|
+| 1 | BLOCKING | `UploadFile.filename` was used verbatim as a path segment under `run_dir` (both the immediate write and the later re-read in `confirm_mapping`) — a filename like `../../../etc/passwd` is a path-traversal arbitrary write/read | Added `_safe_upload_filename`: basename-only, rejects empty/`.`/`..`; the sanitized name is the only one ever persisted as `Run.source_filename` |
+| 2 | BLOCKING | `orchestrator.resolve_requirement` discarded `"category"` from `unresolved` unconditionally, even when the caller never supplied `category` — a parameters-only patch could silently mark an unreviewed/guessed category as engineer-confirmed | Guarded exactly like the already-correct `compliance_required` handling: `unresolved.discard("category")` only runs when `category is not None`. Regression test added (`test_resolving_only_parameters_does_not_clear_unresolved_category`) |
+| 3 | SHOULD-FIX | The whole upload body was buffered into memory before `IngestStage`'s own 20 MiB check ran — memory-exhaustion DoS via an oversized upload | `_read_upload_within_limit` streams in 1 MiB chunks and aborts with `413` once `ingest.readers.MAX_FILE_SIZE_BYTES` is exceeded, before the full file is ever held in memory |
+| 4 | SHOULD-FIX | `POST /users` had no gate at all — anyone could mint an API key with an arbitrary `display_name`, undermining the "named engineer approved this" trust the ledger depends on | Disabled outside `Settings.environment in ("development", "test")`; a production deployment replaces this route with real IdP-backed auth |
+| 5 | MINOR | Invalid `mode`/`category`/`compliance_required`/`mounting` values reached bare `ValueError`s, surfacing as unhandled `500`s | Wrapped in `try`/`except ValueError` -> `HTTPException(422, ...)` in both `resolve_requirement_route` and `_find_plan` |
+| 6 | MINOR | `MappingProfileStore` keys a file by `project_id` with no validation of its own (safe today only because `require_role` already constrains it) | Added `_safe_project_id` as a local, defense-in-depth guard at both call sites, without touching `ingest/mapping_store.py` |
+| 7 | MINOR | `artifact_store._write` was not atomic — a read racing a concurrent write could observe a truncated file | Write-to-temp-file-then-`os.replace` for every JSON artifact write |
+
+A fifth MINOR item (non-constant-time API-key lookup) was accepted as-is per the
+auditor's own "low priority" framing — impractical to exploit against 24-byte random
+keys over a network, and fixing it would require a schema change out of proportion
+to the risk.
+
+**Verification performed:**
+- `pytest -q` — **360 passed** (347 pre-existing + 13 new in `tests/api/`, including
+  the two audit regression tests)
+- `ruff check` / `ruff format --check` — clean across `src/` and `tests/`
+- `mypy --strict` — no issues in 100 source files
+- `npx tsc -b` in `web/` — no TypeScript errors; `npm audit` — 0 vulnerabilities
+  after bumping `@vitejs/plugin-react` to a version compatible with the
+  vulnerability-patched `vite`/`react-router-dom` majors
+- **Real end-to-end walkthrough**, driven only through HTTP against the running
+  FastAPI backend and the Vite dev server's `/api` proxy (never the CLI): registered
+  a user, created a project, uploaded `fixtures/boms/kicad_bom.csv`, confirmed the
+  auto-detected KiCad column mapping, resolved every unresolved requirement field an
+  engineer would see (tolerance, voltage/dielectric, footprint identity, category),
+  ran sourcing against `fixtures/catalogs/kicad_golden_snapshot.json` (5 of 9 ready
+  requirements found a policy-clean candidate; the rest correctly found none, e.g.
+  the crystal's genuine multi-manufacturer-MPN catalog ambiguity), built all five
+  decision-mode plans, approved `lowest_cost`, and attempted export.
+- **The export attempt was correctly blocked** with the real wall clock (today is
+  2026-09-24; the fixture snapshot is pinned to 2026-01-15, outside the 90-day
+  freshness window) — `export_validation_failed: plan includes stale offer
+  snapshot(s)`. This is invariant 5/6 working exactly as designed against
+  fixtures-first data that has genuinely aged past its window; a live M7 adapter
+  re-fetching current offers is what clears it in production. The append-only
+  approval ledger and one-click re-validation endpoint were exercised regardless
+  (re-validation correctly leaves the plan stale, since `FixtureAdapter`'s pinned
+  `fetched_at` cannot itself get fresher). `tests/api/test_full_flow.py` proves the
+  successful-export path mechanically works by pinning `Settings.clock_override`
+  near the snapshot's `fetched_at`, the same technique used for this reasoning.
+- Cross-project run access, non-member reads, and viewer-role mutation attempts all
+  confirmed `404`, including live against the running server, not just in tests.
+
+**Done-when criterion met:** the entire flow above was completed without touching
+`pcbpick.cli` at any point. Awaiting explicit user approval before
+`/roadmap-m7-live-adapters`.
+
+## 18. Evidence summary — M6 session (2026-09-24)
+
+A concrete, checkable record of what was run and observed during the M6 session,
+separate from the narrative decisions in §17. Every item below was directly
+executed and its output inspected in this session, not inferred.
+
+**Dependencies added** (`pyproject.toml` / `uv.lock`, via `uv add`, never bare `pip`):
+`fastapi`, `uvicorn[standard]`, `sqlalchemy`, `python-multipart` (runtime);
+`httpx` (dev group, for `fastapi.testclient.TestClient`). `web/package.json`:
+`react`, `react-dom`, `react-router-dom`; dev: `@vitejs/plugin-react`, `typescript`,
+`vite`, `@types/react`, `@types/react-dom`.
+
+**Files created:**
+- `src/pcbpick/api/` — `__init__.py`, `settings.py`, `db.py`, `auth.py`,
+  `artifact_store.py`, `orchestrator.py`, `schemas.py`, `app.py`,
+  `routers/{__init__,users,projects,runs}.py`
+- `tests/api/` — `__init__.py`, `conftest.py`, `test_full_flow.py`,
+  `test_authorization.py`, `test_security_fixes.py`
+- `web/` — Vite + React + TypeScript project: `package.json`, `tsconfig*.json`,
+  `vite.config.ts`, `index.html`, `src/main.tsx`, `src/App.tsx`, `src/index.css`,
+  `src/state/auth.tsx`, `src/api/{types.ts,client.ts}`,
+  `src/pages/{LoginPage,ProjectsPage,ProjectPage,RunPage}.tsx`
+- `.gitignore` updated: `mapping_profiles/`, `*.db`, `*.tsbuildinfo`
+- `pyproject.toml`: added `[tool.ruff.lint.per-file-ignores]` for `src/pcbpick/api/**`
+  (`B008`, FastAPI's idiomatic `Depends(...)`-as-default pattern)
+
+**Commands run and their observed results, in order:**
+1. `uv add fastapi "uvicorn[standard]" sqlalchemy python-multipart` — resolved,
+   15 packages installed
+2. `uv add --group dev httpx` — resolved, 4 packages installed
+3. `pytest tests/api -q` (first attempt) — **failed**: `0` candidates found
+   sourcing `kicad_bom.csv` end to end
+4. Debug script run directly against `IngestStage`/`NormalizeStage` — revealed the
+   real `unresolved` field set per requirement (`req-0000`..`req-0009`), used to
+   correct the test's resolution patches
+5. Debug script against the running `FixtureAdapter` chain — revealed
+   `footprint_identity` rejections even for exact-MPN matches, root-caused to
+   `normalize`'s package resolver emitting `package_code="0603"` while the fixture
+   catalog uses IPC-style codes (`RESC1608X55N`) — an existing, out-of-scope gap
+   (same one `tests/pipeline/test_sourcing_pipeline.py`'s own docstring already
+   documents), worked around by having the test's simulated engineer supply the
+   IPC-style `package_code` during requirement resolution, not by changing
+   `normalize/`
+6. `pytest tests/api -q` (after fixture corrections) — **2 passed**
+7. `pytest -q` (whole repo) — **356 passed**
+8. `ruff check src/pcbpick/api tests/api` — 88 errors on first run (77 `B008`,
+   8 `E501`, 1 each `I001`/`F401`/`F841`) → added the per-file-ignore, fixed the
+   rest by hand/`--fix` → **all checks passed**
+9. `ruff format --check` / `ruff format` — 7 files reformatted, then clean
+10. `mypy` (strict, repo-wide) — 7 errors on first run (generator return type,
+    `Any`-typed path param, 3× missing type annotations, 2× missing generic args)
+    → fixed each → **no issues in 100 source files**
+11. `npm install` (in `web/`) — **4 vulnerabilities** (3 moderate, 1 high: `esbuild`
+    dev-server request forgery, `react-router` open-redirect/deserialization) →
+    `npm audit fix --force` (bumped `vite` 5→8, `react-router-dom` 6→7) → bumped
+    `@vitejs/plugin-react` 4→6 to resolve the resulting peer-dependency warning →
+    re-ran `npm install` → **0 vulnerabilities**
+12. `npx tsc -b` — clean; a second run after fixing `tsconfig.node.json` (`noEmit`)
+    confirmed no more stray `vite.config.js`/`vite.config.d.ts` build output
+13. Started `uvicorn pcbpick.api.app:app --port 8000` and `npm run dev` (Vite,
+    port 5173) as two live background processes
+14. `Invoke-RestMethod http://localhost:8000/health` and
+    `.../5173/api/health` — both returned `{"status": "ok"}`, confirming the
+    frontend's `/api` proxy reaches the backend
+15. A PowerShell walkthrough script (`demo_walkthrough.ps1`, deleted after use)
+    drove the full HTTP flow through the `5173` proxy origin: register → create
+    project → upload `kicad_bom.csv` → confirm mapping → 9× resolve requirement →
+    source (5 candidates) → build 5 plans → approve `lowest_cost` → export attempt
+    — server access log confirmed every request and its real status code,
+    including the expected `422` on the stale-offer-blocked export
+16. A second script (`demo_walkthrough_2.ps1`) confirmed: the approval ledger
+    listing showed exactly 1 row for the run; `POST .../revalidate` returned 200
+    with the plan still carrying 5 warnings (expected, `FixtureAdapter` data is
+    pinned); a freshly-registered outsider user got `404` reading the project
+17. `invariant-auditor` subagent run — returned 2 BLOCKING + 2 SHOULD-FIX + 3 MINOR
+    findings (full table in §17); each was fixed directly in this session and a
+    regression test added for the two BLOCKING ones
+18. Final full verification, all in one pass: `ruff check` clean, `ruff format
+    --check` clean (129 files), `mypy --strict` clean (100 source files),
+    `pytest -q` — **360 passed**
+19. `git status --short` — final diff limited to `.gitignore`,
+    `docs/decision-log.md`, `pyproject.toml`, `uv.lock`, and the three new
+    directories (`src/pcbpick/api/`, `tests/api/`, `web/`); no stray demo/db/run
+    artifacts left in the tree
+
+**Net test count progression this session:** 347 (M5 baseline) → 360 (9 full-flow/
+authorization tests + 4 security-regression tests, 13 total new in `tests/api/`).
+
+

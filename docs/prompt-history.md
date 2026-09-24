@@ -34,3 +34,7 @@ With that in mind, discuss the implementation steps with me and start create res
 - /roadmap-m5-planning-export
 
 - append an evidence summary of this whole conversation and store it in the #attachment:decision-log.md
+
+- /roadmap-m6-web-app
+
+- append an evidence summary of this whole conversation and store it in the #attachment:decision-log.md
