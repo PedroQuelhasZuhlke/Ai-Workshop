@@ -48,3 +48,13 @@ With that in mind, discuss the implementation steps with me and start create res
 - append an evidence summary of this whole conversation and store it in the #attachment:decision-log.md
 
 - /roadmap-m8-evals-hardening
+
+- Create a readme explaining the purpose of the app and how to use it and place it the root of the repo
+
+- all the 8 phases in the plan where executed, why do you say "This is an in-progress project built milestone-by-milestone; see
+docs/roadmap.md for the full plan. As of now, the pipeline runner
+wires up ingest and normalize; later stages (policy, sourcing, planning,
+exporters) exist as modules with their own tests but are not yet chained into the
+end-to-end run."
+
+what is missing?
