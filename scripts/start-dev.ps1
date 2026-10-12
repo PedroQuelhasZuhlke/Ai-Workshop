@@ -10,7 +10,7 @@
 
 $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
-$ollamaModel = if ($env:PCBPICK_OLLAMA_MODEL) { $env:PCBPICK_OLLAMA_MODEL } else { "llama3.1" }
+$ollamaModel = if ($env:PCBPICK_OLLAMA_MODEL) { $env:PCBPICK_OLLAMA_MODEL } else { "llama3.2:3b" }
 $ollamaBaseUrl = if ($env:PCBPICK_OLLAMA_BASE_URL) { $env:PCBPICK_OLLAMA_BASE_URL } else { "http://localhost:11434" }
 
 function Test-OllamaReachable {

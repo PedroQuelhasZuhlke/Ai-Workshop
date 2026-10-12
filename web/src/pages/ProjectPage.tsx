@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../api/client";
+import ProcessingOverlay from "../components/ProcessingOverlay";
 import type { Project, Run } from "../api/types";
 
 export default function ProjectPage() {
@@ -8,6 +9,7 @@ export default function ProjectPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [runs, setRuns] = useState<Run[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
   async function refresh() {
@@ -29,12 +31,15 @@ export default function ProjectPage() {
   async function upload() {
     if (!projectId || !fileInput.current?.files?.[0]) return;
     setError(null);
+    setUploading(true);
     try {
       await api.uploadRun(projectId, fileInput.current.files[0]);
       fileInput.current.value = "";
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -49,6 +54,7 @@ export default function ProjectPage() {
           <button onClick={upload}>Upload</button>
         </div>
         {error && <p className="error-text">{error}</p>}
+        {uploading && <ProcessingOverlay message="Processing: uploading and reading the BOM..." />}
       </div>
       <div className="card">
         <h3>Runs</h3>

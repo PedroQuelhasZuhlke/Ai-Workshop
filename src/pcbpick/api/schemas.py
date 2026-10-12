@@ -31,6 +31,11 @@ class DevUserOut(BaseModel):
     id: str
     display_name: str
     api_key: str
+    recovery_code: str
+
+
+class RecoverRequest(BaseModel):
+    recovery_code: str = Field(min_length=1, max_length=200)
 
 
 class RunOut(BaseModel):

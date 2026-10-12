@@ -37,6 +37,32 @@ class ApiError extends Error {
   }
 }
 
+function formatDetail(detail: unknown): string {
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    return detail
+      .map((item) => {
+        if (typeof item === "string") return item;
+        if (item && typeof item === "object") {
+          const { loc, msg, code, message } = item as Record<string, unknown>;
+          if (typeof msg === "string") {
+            // FastAPI validation error: drop the "body" prefix from the location path.
+            const path = Array.isArray(loc) ? loc.filter((p) => p !== "body").join(".") : "";
+            return path ? `${path}: ${msg}` : msg;
+          }
+          if (typeof message === "string") return code ? `${code}: ${message}` : message;
+        }
+        return JSON.stringify(item);
+      })
+      .join("\n");
+  }
+  if (detail && typeof detail === "object") {
+    const { message } = detail as Record<string, unknown>;
+    if (typeof message === "string") return message;
+  }
+  return JSON.stringify(detail);
+}
+
 async function request<T>(
   method: string,
   path: string,
@@ -57,7 +83,7 @@ async function request<T>(
     let detail = response.statusText;
     try {
       const payload = await response.json();
-      detail = typeof payload.detail === "string" ? payload.detail : JSON.stringify(payload.detail);
+      if (payload.detail !== undefined) detail = formatDetail(payload.detail);
     } catch {
       // response had no JSON body
     }
@@ -74,10 +100,13 @@ export { ApiError };
 export const api = {
   registerUser: (displayName: string) =>
     request<DevUser>("POST", "/users", { display_name: displayName }),
+  recoverUser: (recoveryCode: string) =>
+    request<DevUser>("POST", "/users/recover", { recovery_code: recoveryCode }),
 
   listProjects: () => request<Project[]>("GET", "/projects"),
   createProject: (name: string) => request<Project>("POST", "/projects", { name }),
   getProject: (projectId: string) => request<Project>("GET", `/projects/${projectId}`),
+  deleteProject: (projectId: string) => request<void>("DELETE", `/projects/${projectId}`),
   addMember: (projectId: string, userId: string, role: string) =>
     request<void>("POST", `/projects/${projectId}/members`, { user_id: userId, role }),
 

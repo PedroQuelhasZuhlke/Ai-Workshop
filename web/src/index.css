@@ -144,9 +144,57 @@ textarea {
 .error-text {
   color: #a4161a;
   font-size: 13px;
+  white-space: pre-line;
 }
 
 .muted {
   color: #6b7280;
   font-size: 12px;
+}
+
+.processing-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 33, 61, 0.55);
+}
+
+.processing-box {
+  background: white;
+  border-radius: 8px;
+  padding: 24px 32px;
+  text-align: center;
+  max-width: 360px;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 12px;
+  border: 4px solid #e5e8ec;
+  border-top-color: #14213d;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.step.clickable {
+  cursor: pointer;
+}
+
+.step.clickable:hover {
+  filter: brightness(1.1);
+}
+
+.step.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

@@ -11,7 +11,16 @@ from collections.abc import Generator, Iterable
 from datetime import datetime
 from uuid import uuid4
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint, create_engine
+from sqlalchemy import (
+    DateTime,
+    ForeignKey,
+    String,
+    Text,
+    UniqueConstraint,
+    create_engine,
+    inspect,
+    text,
+)
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -42,6 +51,8 @@ class User(Base):
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=lambda: uuid4().hex)
     api_key: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     display_name: Mapped[str] = mapped_column(String(200))
+    # SHA-256 of a single-use recovery code; None for users created before recovery existed.
+    recovery_code_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
 
 class Project(Base):
@@ -51,6 +62,8 @@ class Project(Base):
     name: Mapped[str] = mapped_column(String(200))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     created_by: Mapped[str] = mapped_column(String(32), ForeignKey("users.id"))
+    # Soft delete: runs, approvals and exports are retained for audit, per the append-only ledger.
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     memberships: Mapped[list["ProjectMembership"]] = relationship(
         back_populates="project", cascade="all, delete-orphan"
@@ -128,8 +141,21 @@ def make_session_factory(engine: Engine) -> sessionmaker[Session]:
     return sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 
+def _add_missing_column(engine: Engine, table: str, column: str, ddl_type: str) -> None:
+    # create_all never alters existing tables; add columns introduced after a dev DB was made.
+    if column in {c["name"] for c in inspect(engine).get_columns(table)}:
+        return
+    with engine.begin() as connection:
+        connection.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {ddl_type}"))
+
+
 def init_db(engine: Engine) -> None:
     Base.metadata.create_all(engine)
+    _add_missing_column(engine, "users", "recovery_code_hash", "VARCHAR(64)")
+    timestamp_type = (
+        "TIMESTAMP WITH TIME ZONE" if engine.dialect.name == "postgresql" else "DATETIME"
+    )
+    _add_missing_column(engine, "projects", "deleted_at", timestamp_type)
 
 
 def session_scope(factory: sessionmaker[Session]) -> Generator[Session, None, None]:
@@ -141,9 +167,15 @@ def session_scope(factory: sessionmaker[Session]) -> Generator[Session, None, No
 
 
 def user_project_role(session: Session, project_id: str, user_id: str) -> str | None:
+    # Joining on Project makes a soft-deleted project unreachable for every authorized route.
     membership = (
         session.query(ProjectMembership)
-        .filter_by(project_id=project_id, user_id=user_id)
+        .join(Project, Project.id == ProjectMembership.project_id)
+        .filter(
+            ProjectMembership.project_id == project_id,
+            ProjectMembership.user_id == user_id,
+            Project.deleted_at.is_(None),
+        )
         .one_or_none()
     )
     return membership.role if membership else None

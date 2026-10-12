@@ -35,7 +35,7 @@ def list_projects(
     out = []
     for membership in memberships:
         project = session.get(Project, membership.project_id)
-        if project is not None:
+        if project is not None and project.deleted_at is None:
             out.append(
                 ProjectOut(
                     id=project.id,
@@ -62,6 +62,21 @@ def get_project(
     return ProjectOut(
         id=project.id, name=project.name, created_at=project.created_at, role=membership.role
     )
+
+
+@router.delete("/{project_id}", status_code=204)
+def delete_project(
+    project_id: str,
+    session: Session = Depends(get_session),
+    _owner: User = Depends(require_role("project_id", "owner")),
+) -> None:
+    """Soft delete: hides the project from everyone, but keeps its runs, approvals and
+    exports, since the approval ledger is append-only and exports must stay reconstructible."""
+    project = session.get(Project, project_id)
+    if project is None:
+        raise HTTPException(status_code=404, detail="project not found")
+    project.deleted_at = datetime.now(UTC)
+    session.commit()
 
 
 @router.post("/{project_id}/members", status_code=204)

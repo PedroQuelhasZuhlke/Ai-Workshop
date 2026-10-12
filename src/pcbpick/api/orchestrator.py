@@ -25,7 +25,7 @@ from random import Random
 import httpx
 
 from pcbpick.classify.router import missing_required_parameters
-from pcbpick.config.secrets import load_credentials
+from pcbpick.config.secrets import CredentialsNotFoundError, load_credentials
 from pcbpick.contracts.candidate import PartCandidate
 from pcbpick.contracts.common import ParameterValue
 from pcbpick.contracts.enums import ComplianceTag, ComponentCategory, ExportFormat, SupplierId
@@ -56,7 +56,7 @@ _DEFAULT_SNAPSHOT_ROOT = Path("runs/snapshots")
 _USE_LLM_ENV_VAR = "PCBPICK_USE_LLM"
 _OLLAMA_MODEL_ENV_VAR = "PCBPICK_OLLAMA_MODEL"
 _OLLAMA_BASE_URL_ENV_VAR = "PCBPICK_OLLAMA_BASE_URL"
-_DEFAULT_OLLAMA_MODEL = "llama3.1"
+_DEFAULT_OLLAMA_MODEL = "llama3.2:3b"
 
 
 def make_stage_context(run_id: str, now: datetime) -> StageContext:
@@ -115,33 +115,43 @@ def live_adapters(
     http_client: httpx.Client | None = None,
     run_id: str | None = None,
 ) -> list[SupplierAdapter]:
-    """Constructs Mouser/DigiKey/Farnell adapters, credentials loaded from the secret store.
+    """Constructs an adapter for each of Mouser/DigiKey/Farnell that has credentials set.
 
-    `http_client` defaults to a real `httpx.Client` per adapter; tests never call this
-    function without substituting one backed by `httpx.MockTransport`.
+    Suppliers without credentials are skipped; raises `CredentialsNotFoundError` if none
+    have any. Credentials are only checked as present here, not validated against the
+    supplier. `http_client` defaults to a real `httpx.Client` per adapter; tests never
+    call this function without substituting one backed by `httpx.MockTransport`.
     """
     root = snapshot_root or _DEFAULT_SNAPSHOT_ROOT
     client = http_client or httpx.Client()
-    return [
-        MouserAdapter(
-            credentials=load_credentials(SupplierId.MOUSER),
-            http_client=client,
-            snapshot_dir=root / "mouser",
-            run_id=run_id,
-        ),
-        DigiKeyAdapter(
-            credentials=load_credentials(SupplierId.DIGIKEY),
-            http_client=client,
-            snapshot_dir=root / "digikey",
-            run_id=run_id,
-        ),
-        FarnellAdapter(
-            credentials=load_credentials(SupplierId.FARNELL),
-            http_client=client,
-            snapshot_dir=root / "farnell",
-            run_id=run_id,
-        ),
-    ]
+
+    adapters: list[SupplierAdapter] = []
+    missing: list[str] = []
+    for supplier_id, adapter_cls in (
+        (SupplierId.MOUSER, MouserAdapter),
+        (SupplierId.DIGIKEY, DigiKeyAdapter),
+        (SupplierId.FARNELL, FarnellAdapter),
+    ):
+        try:
+            credentials = load_credentials(supplier_id)
+        except CredentialsNotFoundError as exc:
+            missing.append(str(exc))
+            continue
+        adapters.append(
+            adapter_cls(
+                credentials=credentials,
+                http_client=client,
+                snapshot_dir=root / supplier_id.value,
+                run_id=run_id,
+            )
+        )
+
+    if not adapters:
+        raise CredentialsNotFoundError(
+            f"{_LIVE_SUPPLIERS_ENV_VAR} is set but no supplier has credentials; "
+            "configure at least one. " + "; ".join(missing)
+        )
+    return adapters
 
 
 def run_ingest(

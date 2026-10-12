@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api, getApiKey } from "../api/client";
+import ProcessingOverlay from "../components/ProcessingOverlay";
 import type {
   Approval,
   ExportRecord,
@@ -39,15 +40,18 @@ function IssueList({ issues }: { issues: Issue[] }) {
 function MappingStep({
   projectId,
   runId,
+  hasDownstreamWork,
   onDone,
 }: {
   projectId: string;
   runId: string;
-  onDone: () => void;
+  hasDownstreamWork: boolean;
+  onDone: () => void | Promise<void>;
 }) {
   const [proposal, setProposal] = useState<MappingProposal | null>(null);
   const [choices, setChoices] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     api.getMapping(projectId, runId).then((res) => {
@@ -68,16 +72,28 @@ function MappingStep({
   }, [proposal]);
 
   async function confirm() {
+    if (
+      hasDownstreamWork &&
+      !window.confirm(
+        "Re-running normalization replaces the requirement values you have already " +
+          "resolved and invalidates any candidates and plans. Continue?",
+      )
+    ) {
+      return;
+    }
     setError(null);
+    setProcessing(true);
     try {
       const mappings: Record<string, string | null> = {};
       for (const m of proposal?.mappings ?? []) {
         mappings[m.target_field] = choices[m.target_field] ?? null;
       }
       await api.confirmMapping(projectId, runId, mappings);
-      onDone();
+      await onDone();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setProcessing(false);
     }
   }
 
@@ -130,7 +146,10 @@ function MappingStep({
         </p>
       )}
       {error && <p className="error-text">{error}</p>}
-      <button onClick={confirm}>Confirm mapping &amp; normalize</button>
+      <button onClick={confirm} disabled={processing}>
+        Confirm mapping &amp; normalize
+      </button>
+      {processing && <ProcessingOverlay message="Processing: confirming mapping and normalizing the BOM..." />}
     </div>
   );
 }
@@ -139,14 +158,17 @@ function RequirementsStep({
   projectId,
   runId,
   onDone,
+  onChanged,
 }: {
   projectId: string;
   runId: string;
-  onDone: () => void;
+  onDone: () => void | Promise<void>;
+  onChanged: () => void | Promise<void>;
 }) {
   const [requirements, setRequirements] = useState<NormalizedRequirement[] | null>(null);
   const [issues, setIssues] = useState<Issue[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
 
   async function refresh() {
     const res = await api.getRequirements(projectId, runId);
@@ -161,11 +183,14 @@ function RequirementsStep({
 
   async function proceed() {
     setError(null);
+    setProcessing(true);
     try {
       await api.sourceCandidates(projectId, runId);
-      onDone();
+      await onDone();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setProcessing(false);
     }
   }
 
@@ -208,7 +233,10 @@ function RequirementsStep({
                     projectId={projectId}
                     runId={runId}
                     requirement={r}
-                    onSaved={refresh}
+                    onSaved={async () => {
+                      await refresh();
+                      await onChanged();
+                    }}
                   />
                 )}
               </td>
@@ -218,6 +246,9 @@ function RequirementsStep({
       </table>
       {error && <p className="error-text">{error}</p>}
       <button onClick={proceed}>Run sourcing on resolved requirements</button>
+      {processing && (
+        <ProcessingOverlay message="Processing: sourcing candidates and applying policy..." />
+      )}
     </div>
   );
 }
@@ -231,7 +262,7 @@ function InlineResolveForm({
   projectId: string;
   runId: string;
   requirement: NormalizedRequirement;
-  onSaved: () => void;
+  onSaved: () => void | Promise<void>;
 }) {
   const needsCategory = requirement.unresolved.includes("category");
   const parameterNames = requirement.unresolved
@@ -260,7 +291,7 @@ function InlineResolveForm({
       }
       if (needsFootprint && footprintCode) body.footprint = { package_code: footprintCode };
       await api.resolveRequirement(projectId, runId, requirement.requirement_id, body);
-      onSaved();
+      await onSaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -310,12 +341,13 @@ function CandidatesStep({
 }: {
   projectId: string;
   runId: string;
-  onDone: () => void;
+  onDone: () => void | Promise<void>;
 }) {
   const [candidates, setCandidates] = useState<PartCandidate[] | null>(null);
   const [issues, setIssues] = useState<Issue[]>([]);
   const [boardQuantity, setBoardQuantity] = useState(100);
   const [error, setError] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     api.getCandidates(projectId, runId).then((res) => {
@@ -326,11 +358,14 @@ function CandidatesStep({
 
   async function buildPlans() {
     setError(null);
+    setProcessing(true);
     try {
       await api.createPlans(projectId, runId, boardQuantity);
-      onDone();
+      await onDone();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setProcessing(false);
     }
   }
 
@@ -391,6 +426,9 @@ function CandidatesStep({
         <button onClick={buildPlans}>Build purchase plans</button>
       </div>
       {error && <p className="error-text">{error}</p>}
+      {processing && (
+        <ProcessingOverlay message="Processing: building purchase plans for every decision mode..." />
+      )}
     </div>
   );
 }
@@ -407,6 +445,7 @@ function PlansStep({ projectId, runId }: { projectId: string; runId: string }) {
   const [format, setFormat] = useState("csv");
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [processing, setProcessing] = useState<string | null>(null);
 
   async function refresh() {
     const res = await api.getPlans(projectId, runId);
@@ -434,14 +473,22 @@ function PlansStep({ projectId, runId }: { projectId: string; runId: string }) {
   async function revalidate() {
     setError(null);
     setMessage(null);
-    await api.revalidatePlans(projectId, runId, mode);
-    await refresh();
-    setMessage("Re-validated against the current time.");
+    setProcessing("Processing: re-validating offers and rebuilding plans...");
+    try {
+      await api.revalidatePlans(projectId, runId, mode);
+      await refresh();
+      setMessage("Re-validated against the current time.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setProcessing(null);
+    }
   }
 
   async function approve() {
     setError(null);
     setMessage(null);
+    setProcessing("Processing: recording approval...");
     try {
       await api.approvePlan(projectId, runId, mode, {
         reviewed_high_tier_requirement_ids: Array.from(reviewedHighTier),
@@ -452,36 +499,49 @@ function PlansStep({ projectId, runId }: { projectId: string; runId: string }) {
       setMessage("Plan approved and recorded in the approval ledger.");
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setProcessing(null);
     }
   }
 
   async function doExport() {
     setError(null);
     setMessage(null);
+    setProcessing("Processing: validating and generating the export file...");
     try {
       const record = await api.exportPlan(projectId, runId, mode, supplier, format);
       await refresh();
       setMessage(`Export ${record.id} created.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setProcessing(null);
     }
   }
 
   async function download(url: string, filename: string) {
-    const response = await fetch(`/api${url}`, {
-      headers: { "x-api-key": getApiKey() ?? "" },
-    });
-    if (!response.ok) {
-      setError(`download failed: ${response.status}`);
-      return;
+    setError(null);
+    setProcessing("Processing: downloading export...");
+    try {
+      const response = await fetch(`/api${url}`, {
+        headers: { "x-api-key": getApiKey() ?? "" },
+      });
+      if (!response.ok) {
+        setError(`download failed: ${response.status}`);
+        return;
+      }
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setProcessing(null);
     }
-    const blob = await response.blob();
-    const objectUrl = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = objectUrl;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(objectUrl);
   }
 
   if (!plans) return <p>Loading plans...</p>;
@@ -699,6 +759,7 @@ function PlansStep({ projectId, runId }: { projectId: string; runId: string }) {
       )}
       {message && <p className="muted">{message}</p>}
       {error && <p className="error-text">{error}</p>}
+      {processing && <ProcessingOverlay message={processing} />}
     </div>
   );
 }
@@ -708,7 +769,14 @@ export default function RunPage() {
   const [run, setRun] = useState<Run | null>(null);
   const [step, setStep] = useState<Step>("mapping");
 
+  // Updates the run without moving the view, so editing an earlier step keeps you there.
   async function refreshRun() {
+    if (!projectId || !runId) return;
+    setRun(await api.getRun(projectId, runId));
+  }
+
+  // Jumps to the furthest step the run has reached, after a step completes forward.
+  async function advance() {
     if (!projectId || !runId) return;
     const r = await api.getRun(projectId, runId);
     setRun(r);
@@ -716,35 +784,62 @@ export default function RunPage() {
   }
 
   useEffect(() => {
-    refreshRun();
+    advance();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, runId]);
 
   if (!projectId || !runId || !run) return <p>Loading run...</p>;
+
+  const reachedIndex = STEPS.indexOf(stepForStatus(run.status));
 
   return (
     <div>
       <div className="card">
         <h2>{run.source_filename}</h2>
         <div className="steps">
-          {STEPS.map((s) => (
-            <span
-              key={s}
-              className={`step ${s === step ? "active" : STEPS.indexOf(s) < STEPS.indexOf(step) ? "done" : ""}`}
-            >
-              {s}
-            </span>
-          ))}
+          {STEPS.map((s, i) => {
+            const reachable = i <= reachedIndex;
+            const state = s === step ? "active" : reachable ? "done clickable" : "locked";
+            return (
+              <span
+                key={s}
+                role="button"
+                tabIndex={reachable ? 0 : -1}
+                aria-disabled={!reachable}
+                className={`step ${state}`}
+                onClick={() => reachable && setStep(s)}
+                onKeyDown={(e) => {
+                  if (reachable && (e.key === "Enter" || e.key === " ")) setStep(s);
+                }}
+              >
+                {s}
+              </span>
+            );
+          })}
         </div>
+        <p className="muted">
+          Click a completed step to go back and fix values. Editing requirements or re-running
+          the mapping invalidates the later steps until you re-run them.
+        </p>
       </div>
       {step === "mapping" && (
-        <MappingStep projectId={projectId} runId={runId} onDone={refreshRun} />
+        <MappingStep
+          projectId={projectId}
+          runId={runId}
+          hasDownstreamWork={run.status !== "awaiting_mapping_confirmation"}
+          onDone={advance}
+        />
       )}
       {step === "requirements" && (
-        <RequirementsStep projectId={projectId} runId={runId} onDone={refreshRun} />
+        <RequirementsStep
+          projectId={projectId}
+          runId={runId}
+          onDone={advance}
+          onChanged={refreshRun}
+        />
       )}
       {step === "candidates" && (
-        <CandidatesStep projectId={projectId} runId={runId} onDone={refreshRun} />
+        <CandidatesStep projectId={projectId} runId={runId} onDone={advance} />
       )}
       {step === "plans" && <PlansStep projectId={projectId} runId={runId} />}
     </div>

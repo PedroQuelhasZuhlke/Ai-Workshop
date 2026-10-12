@@ -67,6 +67,15 @@ def _run_dir(settings: Settings, run_id: str) -> Path:
     return settings.runs_root / run_id
 
 
+def _require_current_plans(run: Run) -> None:
+    """Plans are only actionable while no earlier step has been edited since they were built."""
+    if run.status != "planned":
+        raise HTTPException(
+            status_code=409,
+            detail="plans are out of date; re-run sourcing and build the plans again",
+        )
+
+
 def _stage_now(settings: Settings) -> datetime:
     return settings.clock_override or datetime.now(UTC)
 
@@ -293,7 +302,7 @@ def resolve_requirement_route(
     settings: Settings = Depends(get_settings),
     _user: User = Depends(require_role("project_id", "engineer")),
 ) -> dict[str, object]:
-    get_owned_run(run_id, project_id, session)
+    run = get_owned_run(run_id, project_id, session)
     run_dir = _run_dir(settings, run_id)
     requirements, issues = artifact_store.load_requirements(run_dir)
 
@@ -331,6 +340,11 @@ def resolve_requirement_route(
     requirements[index] = updated
     issues = _recompute_unresolved_issues(requirements, issues)
     artifact_store.save_requirements(run_dir, requirements, issues)
+    if run.status in ("sourced", "planned"):
+        # Candidates and plans were built from the old values; the engineer must re-run them.
+        run.status = "normalized"
+        session.add(run)
+        session.commit()
     return {"requirement": updated.model_dump(mode="json")}
 
 
@@ -443,6 +457,7 @@ def revalidate_plans(
     """
     del mode  # re-validates every mode; the caller re-fetches its plan afterward
     run = get_owned_run(run_id, project_id, session)
+    _require_current_plans(run)
     run_dir = _run_dir(settings, run_id)
     requirements, _ = artifact_store.load_requirements(run_dir)
     _, board_quantity, _ = artifact_store.load_plans(run_dir)
@@ -489,7 +504,7 @@ def approve_plan(
     settings: Settings = Depends(get_settings),
     user: User = Depends(require_role("project_id", "engineer")),
 ) -> ApprovalOut:
-    get_owned_run(run_id, project_id, session)
+    _require_current_plans(get_owned_run(run_id, project_id, session))
     run_dir = _run_dir(settings, run_id)
     plan = _find_plan(run_dir, mode)
 
@@ -566,7 +581,7 @@ def export_plan(
     settings: Settings = Depends(get_settings),
     user: User = Depends(require_role("project_id", "engineer")),
 ) -> ExportOut:
-    get_owned_run(run_id, project_id, session)
+    _require_current_plans(get_owned_run(run_id, project_id, session))
     run_dir = _run_dir(settings, run_id)
     plan = _find_plan(run_dir, mode)
 

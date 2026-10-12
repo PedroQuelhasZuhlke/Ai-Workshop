@@ -32,6 +32,21 @@ export default function ProjectsPage() {
     }
   }
 
+  async function remove(project: Project) {
+    const confirmed = window.confirm(
+      `Delete project "${project.name}"? It will be hidden for everyone. ` +
+        "Its approval history is retained for audit.",
+    );
+    if (!confirmed) return;
+    setError(null);
+    try {
+      await api.deleteProject(project.id);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
   return (
     <div>
       <div className="card">
@@ -68,6 +83,15 @@ export default function ProjectsPage() {
                 <td>{new Date(p.created_at).toLocaleString()}</td>
                 <td>
                   <Link to={`/projects/${p.id}`}>Open</Link>
+                  {p.role === "owner" && (
+                    <button
+                      className="secondary"
+                      style={{ marginLeft: 12 }}
+                      onClick={() => remove(p)}
+                    >
+                      Delete
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}

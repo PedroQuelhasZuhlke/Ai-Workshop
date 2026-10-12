@@ -171,7 +171,7 @@ does this for you (see above). To do it by hand instead:
 ```powershell
 # once: start Ollama (+ Open WebUI) in Docker and pull a model into the container
 docker compose up -d ollama open-webui
-docker exec pcbpick-ollama ollama pull llama3.1
+docker exec pcbpick-ollama ollama pull llama3.2:3b
 
 # set before starting the API
 $env:PCBPICK_USE_LLM = "1"
@@ -179,10 +179,10 @@ uv run uvicorn pcbpick.api.app:app --reload
 ```
 
 No Docker? Install [Ollama](https://ollama.com) locally instead (`ollama pull
-llama3.1`) — the backend also auto-starts a local `ollama serve` if it finds the
+llama3.2:3b`) — the backend also auto-starts a local `ollama serve` if it finds the
 executable on `PATH` and nothing is already listening on `PCBPICK_OLLAMA_BASE_URL`.
 
-`PCBPICK_OLLAMA_MODEL` (default `llama3.1`) and `PCBPICK_OLLAMA_BASE_URL` (default
+`PCBPICK_OLLAMA_MODEL` (default `llama3.2:3b`) and `PCBPICK_OLLAMA_BASE_URL` (default
 `http://localhost:11434`) override the model and server address. Never set
 `PCBPICK_USE_LLM` in tests — it would add a live network call, which
 [.github/instructions/testing.instructions.md](.github/instructions/testing.instructions.md)

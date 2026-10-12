@@ -5,6 +5,7 @@ export interface DevUser {
   id: string;
   display_name: string;
   api_key: string;
+  recovery_code: string;
 }
 
 export interface Project {
