@@ -72,7 +72,8 @@ src/pcbpick/
   llm/            # Prompt templates, structured-output calls, validation retries
   cli.py          # `pcbpick` command-line entry point
 web/              # React + TypeScript (Vite) frontend
-fixtures/         # Offline catalog snapshots, sample + golden BOMs
+fixtures/         # Offline catalog snapshots, sample + golden BOMs (test/eval data)
+demo/             # Mock Mouser/DigiKey/Farnell catalogs + a demo BOM (app data, fictional)
 evals/            # Golden-BOM regression suite
 tests/            # pytest suite
 docs/             # Architecture and contract specs
@@ -187,6 +188,50 @@ executable on `PATH` and nothing is already listening on `PCBPICK_OLLAMA_BASE_UR
 `PCBPICK_USE_LLM` in tests — it would add a live network call, which
 [.github/instructions/testing.instructions.md](.github/instructions/testing.instructions.md)
 forbids.
+
+### Offline mock suppliers
+
+Without live credentials, the app sources from three offline mock catalogs standing in for
+Mouser, DigiKey and Farnell (`demo/catalogs/mock_mouser.json`, `mock_digikey.json`,
+`mock_farnell.json`). Their SKUs (`MOCK-...`), prices and stock are **fictional** — never
+order from them — but they overlap, differ in price/stock/MOQ/SPQ, and include a
+zero-stock offer and a EUR-priced offer, so purchase plans and per-supplier exports can be
+exercised offline. Sourcing shows a warning whenever mock data is in use.
+
+To try it, upload `demo/boms/mock_suppliers_demo.csv`: every row resolves without manual
+edits, so you can go straight to candidate review and plan comparison. Its rows are chosen
+so that the catalogs have a matching part for each one (one MPN carried by all three
+suppliers, a Farnell-only part, a part with no catalog match, and rows with no MPN that
+find alternates). Only parts in the mock catalogs can be found.
+
+Set `PCBPICK_CATALOG_SNAPSHOTS` (path-separator-delimited files, `supplier` `fixture`) to
+use your own offline catalog instead of the mocks.
+
+### Optional: live supplier catalogs
+
+To search the real Mouser, DigiKey and Farnell catalogs instead of the mocks, create a
+`.env.local` file in the repository root (it is gitignored — never commit it):
+
+```
+PCBPICK_USE_LIVE_SUPPLIERS=1
+PCBPICK_MOUSER_API_KEY=your-mouser-search-api-key
+PCBPICK_DIGIKEY_CLIENT_ID=your-digikey-client-id
+PCBPICK_DIGIKEY_CLIENT_SECRET=your-digikey-client-secret
+PCBPICK_FARNELL_API_KEY=your-farnell-api-key
+```
+
+- One `NAME=value` per line; quotes around the value are optional. Only names starting
+  with `PCBPICK_` are read.
+- Include only the suppliers you have credentials for, but at least one — with
+  `PCBPICK_USE_LIVE_SUPPLIERS=1` the sourcing request fails with an error naming the
+  missing variables if none are set. DigiKey needs both its client id and secret;
+  with only one of them, DigiKey is skipped.
+- Credentials are checked for presence only, not validated against the supplier. A bad
+  key surfaces as an adapter failure when sourcing runs.
+- Start with `./scripts/start-dev.ps1`, which loads `.env.local` and passes it to the
+  backend. Running `uvicorn` directly does not read the file; set the same variables
+  in your shell (`$env:PCBPICK_MOUSER_API_KEY = "..."`) instead.
+- Restart the backend after editing the file.
 
 ## Testing
 

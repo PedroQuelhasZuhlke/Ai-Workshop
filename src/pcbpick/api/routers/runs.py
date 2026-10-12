@@ -360,7 +360,10 @@ def source_candidates(
     run_dir = _run_dir(settings, run_id)
     requirements, _ = artifact_store.load_requirements(run_dir)
 
-    adapters = orchestrator.default_adapters(settings.catalog_snapshot_paths)
+    adapters = orchestrator.default_adapters(
+        settings.catalog_snapshot_paths,
+        mock_supplier_snapshots=settings.mock_supplier_snapshots,
+    )
     ctx = orchestrator.make_stage_context(run_id, _stage_now(settings))
     chain_result = orchestrator.run_sourcing_chain(
         requirements, adapters, orchestrator.default_llm_client(), ctx
@@ -462,7 +465,10 @@ def revalidate_plans(
     requirements, _ = artifact_store.load_requirements(run_dir)
     _, board_quantity, _ = artifact_store.load_plans(run_dir)
 
-    adapters = orchestrator.default_adapters(settings.catalog_snapshot_paths)
+    adapters = orchestrator.default_adapters(
+        settings.catalog_snapshot_paths,
+        mock_supplier_snapshots=settings.mock_supplier_snapshots,
+    )
     ctx = orchestrator.make_stage_context(run_id, _stage_now(settings))
     chain_result = orchestrator.run_sourcing_chain(
         requirements, adapters, orchestrator.default_llm_client(), ctx

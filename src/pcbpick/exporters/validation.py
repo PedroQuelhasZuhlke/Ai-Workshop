@@ -23,30 +23,34 @@ def check_approved(approved_by: str, approved_at: datetime | None) -> str | None
 
 
 def check_no_stale_offers(
-    plan: PurchasePlan, stale_offer_snapshot_ids: frozenset[str]
+    plan: PurchasePlan, acknowledged_stale_requirement_ids: frozenset[str]
 ) -> str | None:
-    """No selected line may rest on a stale offer.
+    """No selected line may rest on a stale, un-acknowledged offer.
 
-    Staleness has two independent sources, both checked: the plan's own
-    `PlanWarningKind.STALE_OFFER` warnings (computed by `PlanningStage` against
-    `ctx.now` and the freshness window -- this is the primary, always-on check, so
-    the gate cannot fail open just because a caller forgot to populate
-    `stale_offer_snapshot_ids`), and any snapshot the caller separately flags via
-    `stale_offer_snapshot_ids` (e.g. a fresh re-validation performed after the plan
-    was built, per `.github/skills/supplier-export/SKILL.md` gate 2's
-    "re-validate against the supplier before writing").
+    Staleness is always computed from the plan's own `PlanWarningKind.STALE_OFFER`
+    warnings (set by `PlanningStage` against `ctx.now` and the freshness window) --
+    the gate can never fail open by omission. An engineer may override a *specific*
+    stale line by acknowledging its `requirement_id` at approval time (the
+    `acknowledged_stale_offer_snapshot_ids` field end-to-end through the API/DB/web
+    layers -- see `api/db.py`'s `ApprovalRecord` and `web/src/pages/RunPage.tsx` --
+    is in practice always populated with the warning's `requirement_id`, since
+    `PlanWarning` carries no `snapshot_id` of its own to key on; this function
+    matches on that same key rather than fighting the field's historical name).
+    The acknowledgment is recorded on the immutable `ApprovalRecord`, so the
+    override itself is as auditable as the approval it belongs to. A stale
+    requirement that is not acknowledged still blocks export.
     """
-    warned_ids = {
+    stale_requirement_ids = {
         warning.requirement_id
         for warning in plan.warnings
         if warning.kind == PlanWarningKind.STALE_OFFER and warning.requirement_id is not None
     }
-    flagged_ids = {
-        line.requirement_id for line in plan.lines if line.snapshot_id in stale_offer_snapshot_ids
-    }
-    stale_ids = sorted(warned_ids | flagged_ids)
-    if stale_ids:
-        return f"plan includes stale offer snapshot(s) for requirement(s): {', '.join(stale_ids)}"
+    unacknowledged_ids = sorted(stale_requirement_ids - acknowledged_stale_requirement_ids)
+    if unacknowledged_ids:
+        return (
+            "plan includes stale offer(s) not acknowledged by the approving engineer "
+            f"for requirement(s): {', '.join(unacknowledged_ids)}"
+        )
     return None
 
 
@@ -94,13 +98,13 @@ def validate_for_export(
     plan: PurchasePlan,
     approved_by: str,
     approved_at: datetime | None,
-    stale_offer_snapshot_ids: frozenset[str],
+    acknowledged_stale_requirement_ids: frozenset[str],
     reviewed_high_tier_requirement_ids: frozenset[str],
 ) -> list[str]:
     """Every export gate, composed. An empty list means every gate passed."""
     checks = (
         check_approved(approved_by, approved_at),
-        check_no_stale_offers(plan, stale_offer_snapshot_ids),
+        check_no_stale_offers(plan, acknowledged_stale_requirement_ids),
         check_no_unreviewed_high_tier_lines(plan, reviewed_high_tier_requirement_ids),
         check_no_unfilled_requirements(plan),
         check_every_order_qty_positive(plan),

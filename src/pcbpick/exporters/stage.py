@@ -12,7 +12,7 @@ substituted for it.
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from pcbpick.contracts.enums import ExportFormat, SupplierId
+from pcbpick.contracts.enums import ExportFormat, PlanWarningKind, SupplierId
 from pcbpick.contracts.export import SupplierExport
 from pcbpick.contracts.plan import PlanLine, PurchasePlan
 from pcbpick.errors import ContractViolationError
@@ -30,12 +30,14 @@ class ExportStageInput:
     """One supplier's export request against one plan, plus the recorded approval and
     the caller's review determinations for the validation gates.
 
-    `stale_offer_snapshot_ids` is *additional* to the plan's own
-    `PlanWarningKind.STALE_OFFER` warnings, which `validation.check_no_stale_offers`
-    always checks regardless of this field -- it exists for staleness discovered by
-    a fresh re-validation performed after the plan was built, not as the sole source
-    of truth. Its empty default is therefore safe: it never has to be populated for
-    the plan's own already-known-stale offers to be caught."""
+    `stale_offer_snapshot_ids` is the engineer's acknowledged-override set from the
+    approval record (`api/db.py`'s `ApprovalRecord.acknowledged_stale_offer_snapshot_ids`).
+    Despite its name (kept for compatibility with the already-shipped API/DB/web
+    layers), it is matched against `PlanLine.requirement_id`, not `snapshot_id` --
+    see `exporters.validation.check_no_stale_offers`'s docstring for why. Its empty
+    default means no override is granted: every `PlanWarningKind.STALE_OFFER`
+    warning on the plan still blocks export unless its requirement is explicitly
+    acknowledged here."""
 
     plan: PurchasePlan
     supplier: SupplierId
@@ -80,6 +82,31 @@ def _row_for_line(supplier: SupplierId, line: PlanLine) -> dict[str, str]:
             }
         case SupplierId.FIXTURE:
             raise ContractViolationError("fixture is not a real export destination")
+
+
+def _acknowledged_stale_issues(inp: ExportStageInput) -> list[StageIssue]:
+    """One `INFO` issue per stale-offer requirement this export actually relied on
+    the engineer's acknowledgment to pass -- `validate_for_export` already blocked
+    every *unacknowledged* one, so every id here reached export on an explicit,
+    recorded override rather than silently."""
+    stale_requirement_ids = {
+        warning.requirement_id
+        for warning in inp.plan.warnings
+        if warning.kind == PlanWarningKind.STALE_OFFER and warning.requirement_id is not None
+    }
+    overridden = sorted(stale_requirement_ids & inp.stale_offer_snapshot_ids)
+    return [
+        StageIssue(
+            severity=Severity.INFO,
+            code="exported_with_acknowledged_stale_offer",
+            message=(
+                f"requirement {requirement_id} had a stale offer; exported anyway on "
+                f"{inp.approved_by}'s acknowledged override from the approval record"
+            ),
+            item_id=requirement_id,
+        )
+        for requirement_id in overridden
+    ]
 
 
 class ExportStage:
@@ -136,4 +163,5 @@ class ExportStage:
                 ),
             )
         ]
+        issues.extend(_acknowledged_stale_issues(inp))
         return StageResult(output=ExportedFile(export=export, file_bytes=file_bytes), issues=issues)

@@ -5,6 +5,11 @@ carves out for `sourcing/suppliers/`: all reading happens once, at construction,
 local files. After `__init__` returns, no method here touches the filesystem or the
 network again.
 
+An adapter stamps every offer with its `supplier` (default `SupplierId.FIXTURE`).
+Passing `MOUSER`/`DIGIKEY`/`FARNELL` makes it an offline *mock* of that supplier, so
+plans and exports can be exercised without live access. Every snapshot it loads must
+declare that same `supplier`, so a file is never silently attributed to another one.
+
 ## Snapshot file schema
 
 One JSON file per pinned catalog state:
@@ -12,7 +17,7 @@ One JSON file per pinned catalog state:
 ```jsonc
 {
   "snapshot_id": "string, stable, content-addressed-ish identifier for this pinned catalog state",
-  "supplier": "fixture",
+  "supplier": "fixture | mouser | digikey | farnell, must equal the adapter's supplier",
   "fetched_at": "ISO 8601 UTC timestamp, e.g. 2026-01-15T00:00:00Z",
   "parts": [
     {
@@ -72,7 +77,7 @@ straight to `None` and are never defaulted to a number.
 - `offers()`: finds the `CatalogSku` with the exact `sku` string across every loaded part,
   and returns a list of exactly one `SupplierOffer` (or `[]` if the SKU is unknown), stamped
   with the real `snapshot_id`/`fetched_at` from the snapshot file that SKU came from and
-  `supplier=SupplierId.FIXTURE`. `quantity` is accepted per the protocol but ignored: this
+  `supplier=<the adapter's supplier_id>`. `quantity` is accepted per the protocol but ignored: this
   adapter always returns the full pinned price-break ladder; a real supplier's adapter might
   filter by requested quantity, this one doesn't need to.
 
@@ -107,8 +112,13 @@ _PRIMARY_PARAMETER_BY_CATEGORY: dict[str, str] = {
 }
 
 
-def _load_snapshot_file(path: Path) -> list[CatalogPart]:
+def _load_snapshot_file(path: Path, supplier: SupplierId) -> list[CatalogPart]:
     raw: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    if raw.get("supplier") != supplier.value:
+        raise ValueError(
+            f"snapshot {path} declares supplier {raw.get('supplier')!r}, "
+            f"but the adapter is for {supplier.value!r}"
+        )
     snapshot_id: str = raw["snapshot_id"]
     fetched_at = datetime.fromisoformat(raw["fetched_at"])
     parts: list[CatalogPart] = []
@@ -130,12 +140,13 @@ class FixtureAdapter(SupplierAdapter):
     module docstring for the snapshot file schema and matching rules.
     """
 
-    supplier_id: SupplierId = SupplierId.FIXTURE
-
-    def __init__(self, paths: list[Path] | list[str]) -> None:
+    def __init__(
+        self, paths: list[Path] | list[str], supplier: SupplierId = SupplierId.FIXTURE
+    ) -> None:
+        self.supplier_id: SupplierId = supplier
         parts: list[CatalogPart] = []
         for raw_path in paths:
-            parts.extend(_load_snapshot_file(Path(raw_path)))
+            parts.extend(_load_snapshot_file(Path(raw_path), supplier))
         self._parts: tuple[CatalogPart, ...] = tuple(parts)
 
         skus_by_sku: dict[str, tuple[CatalogPart, CatalogSku]] = {}
@@ -146,13 +157,18 @@ class FixtureAdapter(SupplierAdapter):
         self._skus_by_sku = skus_by_sku
 
     @classmethod
-    def from_directory(cls, directory: Path | str, pattern: str = "*.json") -> "FixtureAdapter":
+    def from_directory(
+        cls,
+        directory: Path | str,
+        pattern: str = "*.json",
+        supplier: SupplierId = SupplierId.FIXTURE,
+    ) -> "FixtureAdapter":
         """Loads every file matching `pattern` in `directory`, sorted by filename.
 
         Sorted so that `details()`'s "first found in file order" rule is deterministic
         regardless of the operating system's directory-listing order.
         """
-        return cls(sorted(Path(directory).glob(pattern)))
+        return cls(sorted(Path(directory).glob(pattern)), supplier)
 
     def search(self, query: SourcingQuery) -> list[CatalogHit]:
         hits: list[CatalogHit] = []
@@ -194,7 +210,7 @@ class FixtureAdapter(SupplierAdapter):
             return []  # see module docstring: known SupplierOffer contract gap
         return [
             SupplierOffer(
-                supplier=SupplierId.FIXTURE,
+                supplier=self.supplier_id,
                 sku=catalog_sku.sku,
                 packaging=catalog_sku.packaging,
                 stock=catalog_sku.stock,

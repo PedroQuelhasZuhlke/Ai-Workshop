@@ -10,6 +10,17 @@
 
 $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
+
+# Child windows inherit these; only PCBPICK_* names are accepted from the file.
+$envFile = Join-Path $repoRoot ".env.local"
+if (Test-Path $envFile) {
+    foreach ($line in Get-Content $envFile) {
+        if ($line -match '^\s*(PCBPICK_[A-Z0-9_]+)\s*=\s*(.*?)\s*$') {
+            Set-Item -Path "Env:$($Matches[1])" -Value $Matches[2].Trim('"', "'")
+        }
+    }
+    Write-Host "Loaded settings from .env.local"
+}
 $ollamaModel = if ($env:PCBPICK_OLLAMA_MODEL) { $env:PCBPICK_OLLAMA_MODEL } else { "llama3.2:3b" }
 $ollamaBaseUrl = if ($env:PCBPICK_OLLAMA_BASE_URL) { $env:PCBPICK_OLLAMA_BASE_URL } else { "http://localhost:11434" }
 

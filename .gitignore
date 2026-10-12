@@ -14,6 +14,9 @@ runs/
 mapping_profiles/
 *.db
 
+# Local secrets (supplier API keys) loaded by scripts/start-dev.ps1
+.env.local
+
 # Node (web/ frontend, later milestones)
 node_modules/
 *.tsbuildinfo

@@ -55,7 +55,7 @@ def test_write_snapshot_is_loadable_by_fixture_adapter(tmp_path: Path) -> None:
         supplier=SupplierId.MOUSER, parts=[_RAW_PART], fetched_at=fetched_at, snapshot_dir=tmp_path
     )
 
-    adapter = FixtureAdapter([written.path])
+    adapter = FixtureAdapter([written.path], supplier=SupplierId.MOUSER)
     part = adapter.details("RC0603FR-0710KL")
 
     assert part is not None

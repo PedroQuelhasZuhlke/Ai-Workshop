@@ -51,7 +51,9 @@ evals/
     "normalized_requirements": [ /* NormalizedRequirement[], schema_version v1 */ ],
 
     "catalog_snapshot": "fixtures/catalogs/kicad_golden_snapshot.json",
-    // present only when `chain` includes "source"
+    // present only when `chain` includes "source". Alternatively, instead of this key,
+    // "catalog_snapshots": {"mouser": "demo/catalogs/mock_mouser.json", ...} loads one
+    // supplier-stamped FixtureAdapter per entry (each file's `supplier` must match its key).
 
     "llm": {
       // present only when `chain` includes "normalize" (fallback) or "evaluate"
@@ -109,6 +111,7 @@ must not treat an absent field as an implicit assertion of `0`.
 | `orcad_bom_ingest_normalize` | an OrCAD/Allegro export with a 4-row title block above the real header; the same passive/connector/LED unresolved pattern holds once the header is found correctly. |
 | `kicad_edge_cases_ingest_normalize` | refdes range/gap expansion and a quantity/refdes mismatch (`R10-R12` states qty 4, lists 3) survive into normalize correctly — `quantity_per_board` uses the derived refdes count (3), not the disagreeing stated quantity (4) — while every non-DNP row still lands unresolved for the same structural reason as the other three exports. |
 | `normalize_edge_cases_normalize` | the full M2 edge-case suite (RKM notation, 3-digit capacitor codes, ambiguous `1M`/`104`/`103K`, unicode micro-sign variants, safety-critical fuse/Y2-capacitor classification, asymmetric `Z`-code tolerance, and the one row requiring `normalize_fallback`) scored in aggregate: exact counts per category, per confidence tier, per criticality, and of rows with a non-empty `unresolved`, all independently re-counted here from the fixture's own hand-verified per-row `expected_*` fields (not merely re-stating them, which is why `hand_verified_reasoning` shows the tally). |
+| `mock_suppliers_demo_bom_through_policy` | the only case where a *real* normalize output reaches sourcing: `demo/boms/mock_suppliers_demo.csv` resolves fully, then `expand → source → policy` runs against the three offline mock supplier catalogs (`catalog_snapshots`). Proves one candidate per MPN across suppliers (offers unioned), cross-supplier alternates for rows with no MPN, tier-3 rejection of wrong-footprint decoys, and zero candidates for an MPN no catalog carries. |
 
 ## Deliberate scope limits (not gaps — see "Follow-ups" for actual gaps)
 

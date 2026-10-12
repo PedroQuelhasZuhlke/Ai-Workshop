@@ -7,6 +7,12 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
+DEFAULT_MOCK_SUPPLIER_SNAPSHOTS: dict[str, str] = {
+    "mouser": "demo/catalogs/mock_mouser.json",
+    "digikey": "demo/catalogs/mock_digikey.json",
+    "farnell": "demo/catalogs/mock_farnell.json",
+}
+
 
 class Settings(BaseModel):
     """Environment-driven configuration for the FastAPI app.
@@ -20,6 +26,9 @@ class Settings(BaseModel):
     database_url: str = "sqlite:///./pcbpick_api.db"
     runs_root: Path = Path("runs")
     catalog_snapshot_paths: tuple[str, ...] = ("fixtures/catalogs/kicad_golden_snapshot.json",)
+    # Offline mocks of real suppliers, keyed by `SupplierId` value. Empty by default so
+    # tests stay pinned to one catalog; `get_settings()` turns them on for the app.
+    mock_supplier_snapshots: dict[str, str] = {}
     cors_origins: tuple[str, ...] = ("http://localhost:5173",)
     environment: str = "development"
     # `None` in production: every pipeline `StageContext.now` uses the real wall
@@ -31,14 +40,15 @@ class Settings(BaseModel):
 
 @lru_cache
 def get_settings() -> Settings:
+    explicit_catalogs = os.environ.get("PCBPICK_CATALOG_SNAPSHOTS")
     return Settings(
         database_url=os.environ.get("PCBPICK_DATABASE_URL", "sqlite:///./pcbpick_api.db"),
         runs_root=Path(os.environ.get("PCBPICK_RUNS_ROOT", "runs")),
-        catalog_snapshot_paths=tuple(
-            os.environ.get(
-                "PCBPICK_CATALOG_SNAPSHOTS", "fixtures/catalogs/kicad_golden_snapshot.json"
-            ).split(os.pathsep)
+        # Unset -> the mock Mouser/DigiKey/Farnell catalogs; set -> exactly those files.
+        catalog_snapshot_paths=(
+            tuple(explicit_catalogs.split(os.pathsep)) if explicit_catalogs else ()
         ),
+        mock_supplier_snapshots={} if explicit_catalogs else dict(DEFAULT_MOCK_SUPPLIER_SNAPSHOTS),
         cors_origins=tuple(
             os.environ.get("PCBPICK_CORS_ORIGINS", "http://localhost:5173").split(",")
         ),

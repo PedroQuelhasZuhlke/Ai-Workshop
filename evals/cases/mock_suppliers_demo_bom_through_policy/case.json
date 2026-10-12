@@ -1,0 +1,51 @@
+{
+  "case_id": "mock_suppliers_demo_bom_through_policy",
+  "description": "The mock-supplier demo BOM (demo/boms/mock_suppliers_demo.csv), run through the real ingest -> normalize -> expand -> source -> policy chain against the three offline mock catalogs (mock_mouser/mock_digikey/mock_farnell.json, each loaded by a FixtureAdapter stamped with its own supplier). Unlike every other BOM fixture, every row here normalizes fully resolved, so this is the one case where a real normalize output reaches sourcing. Proves: one candidate per MPN even when several suppliers carry it (offers are unioned, not duplicated); parametric rows (no MPN) surface cross-supplier alternates; wrong-footprint decoys are rejected at tier 3 by footprint_identity; a row whose MPN no mock carries yields zero candidates.",
+  "chain": ["ingest", "normalize", "expand", "source", "policy"],
+  "inputs": {
+    "bom_file": "demo/boms/mock_suppliers_demo.csv",
+    "catalog_snapshots": {
+      "mouser": "demo/catalogs/mock_mouser.json",
+      "digikey": "demo/catalogs/mock_digikey.json",
+      "farnell": "demo/catalogs/mock_farnell.json"
+    }
+  },
+  "not_extended_to": [
+    "evaluate -- needs a candidate_rationale LLM fixture; the demo's value is in sourcing/policy, and rationale handling is already covered by kicad_bom_hand_built_subset_sourcing_policy_evaluate.",
+    "plan/export -- the eval runner does not reach them; multi-supplier plan behavior is covered by tests/pipeline/test_mock_suppliers_pipeline.py with structural (not total-pinning) assertions."
+  ],
+  "expect": {
+    "normalized_rows": 9,
+    "dnp_excluded": 0,
+    "unresolved_max": 0,
+    "category_counts": {
+      "resistor": 5,
+      "capacitor": 3,
+      "ic_analog": 1
+    },
+    "requirements_sourced": 9,
+    "tier0_candidates_total": 5,
+    "candidates_by_requirement": {
+      "req-0000": { "total": 1, "policy_clean_min": 1 },
+      "req-0001": {
+        "total": 3,
+        "tier3_mpns": { "RC0805FR-074K7L": "footprint_identity" },
+        "policy_clean_min": 2,
+        "policy_clean_max": 2
+      },
+      "req-0002": { "total": 1, "policy_clean_min": 1 },
+      "req-0003": { "total": 1, "policy_clean_min": 1 },
+      "req-0004": { "total": 0, "policy_clean_max": 0 },
+      "req-0005": { "total": 1, "policy_clean_min": 1 },
+      "req-0006": {
+        "total": 2,
+        "tier3_mpns": { "GRM155R71C104KA88D": "footprint_identity" },
+        "policy_clean_min": 1,
+        "policy_clean_max": 1
+      },
+      "req-0007": { "total": 2, "tier3_mpns": {}, "policy_clean_min": 2 },
+      "req-0008": { "total": 1, "policy_clean_min": 1 }
+    }
+  },
+  "hand_verified_reasoning": "BOM: 9 data rows, no DNP column -> normalized_rows 9, dnp_excluded 0. Columns are Reference,Value,Description,Footprint,Qty,Manufacturer,MPN (separate Value and Description, because an Altium-style 'Comment' header matches both synonyms and the Description column would then never be read). Footprints are IPC names (RESC1608X55N, CAPC1005X55N, CAPC1608X90N, CAPC2012X125N) which normalize/package.py resolves to imperial 0603/0402/0603/0805 with mounting smt and length/width only; 'SOIC-8' resolves to package_code 'SOIC-8' with nothing else. The mock catalogs use exactly those footprint forms, since footprint_identity compares all eight Footprint fields exactly. Descriptions state '1%' (resistors) and '6.3V X7R/X5R' (capacitors); 6.3V x the Class II derate multiplier 2 = 12.6V <= the catalog parts' 16V. So rows resolve fully: 5 resistor rows (R1-R4, R5, R6, R7, R8), 3 capacitor rows (C1/C2, C3, C4), U1 'Op-Amp' -> ic_analog => category_counts 5/3/1, unresolved_max 0, requirements_sourced 9.\n\nSource counts (source dedups on (requirement, mpn, manufacturer), unioning offers across suppliers):\n- req-0000 R1-R4, MPN RC0603FR-0710KL: exact-MPN search -> 1 candidate (carried by all three mocks, one candidate with 4 offers).\n- req-0001 R5 4k7, no MPN: category+resistance=4700 -> RC0603FR-074K7L (mouser, digikey), CRCW06034K70FKEA (farnell), RC0805FR-074K7L (mouser, 0805 decoy) => total 3. The 0805 part has package_code '0805' != '0603' -> tier 3 footprint_identity; clean = 2.\n- req-0002 R6, MPN CRCW0603100RFKEA (farnell only) -> 1. req-0003 R7, MPN ERJ-3EKF1001V (mouser stock 0, digikey) -> 1.\n- req-0004 R8, MPN RC0603FR-072K2L appears in no mock catalog -> total 0 (and a no_candidates_found warning).\n- req-0005 C1/C2, MPN GRM155R71C104KA88D (mouser, digikey) -> 1.\n- req-0006 C3 0.1uF 0603, no MPN: category+capacitance=1E-7 -> GRM155R71C104KA88D (0402 part, tier 3 footprint_identity) and CL10B104KB8NNNC (0603; digikey + farnell) => total 2, clean 1.\n- req-0007 C4 10uF 0805, no MPN: capacitance 1E-5 -> GRM21BR61C106KE15L (mouser, farnell) and CL21A106KOQNNNG (digikey), both 0805 16V X5R => total 2, clean 2, nothing rejected (tier3_mpns {}).\n- req-0008 U1, MPN LM358DR (all three) -> 1.\ntier0_candidates_total: a candidate is tier 0 when its MPN equals the requirement's specified MPN and every rule passes: req-0000, 0002, 0003, 0005, 0008 => 5. req-0004's specified MPN matches nothing; req-0001/0006/0007 specify no MPN."
+}

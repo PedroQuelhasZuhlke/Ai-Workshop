@@ -17,6 +17,7 @@ it reuses `classify.router.missing_required_parameters`, the same pure function
 """
 
 import os
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -38,7 +39,7 @@ from pcbpick.llm.client import LLMClient
 from pcbpick.llm.ollama_client import OllamaLLMClient
 from pcbpick.normalize.stage import NormalizeStage
 from pcbpick.pipeline.context import PipelineConfig, StageContext
-from pcbpick.pipeline.results import StageIssue, StageResult
+from pcbpick.pipeline.results import Severity, StageIssue, StageResult
 from pcbpick.planning.stage import PlanningStage, PlanningStageInput
 from pcbpick.policy.stage import PolicyStage, PolicyStageInput
 from pcbpick.sourcing.evaluate import EvaluateStage, EvaluateStageInput
@@ -88,14 +89,15 @@ def default_adapters(
     catalog_snapshot_paths: tuple[str, ...],
     *,
     use_live_suppliers: bool | None = None,
+    mock_supplier_snapshots: Mapping[str, str] | None = None,
 ) -> list[SupplierAdapter]:
-    """Fixture-only by default, matching M4/M5's fixtures-first precedent.
+    """Offline by default, matching M4/M5's fixtures-first precedent.
 
     Pass `use_live_suppliers=True`, or set `PCBPICK_USE_LIVE_SUPPLIERS=1`, to source
-    from Mouser/DigiKey/Farnell instead — every existing caller that doesn't pass the
-    new keyword continues to get exactly the old fixture-only behavior. Nothing
-    upstream of `source` (`SourceStage`, `PolicyStage`, `EvaluateStage`, ...) changes
-    either way, per this milestone's "done when" criterion.
+    from Mouser/DigiKey/Farnell instead. Offline, the result is one `FixtureAdapter` over
+    `catalog_snapshot_paths` (if any), plus one mock adapter per `mock_supplier_snapshots`
+    entry (`{supplier id value: snapshot path}`) so each mock stamps its own supplier.
+    Nothing upstream of `source` changes either way.
     """
     live_enabled = use_live_suppliers
     if live_enabled is None:
@@ -104,9 +106,18 @@ def default_adapters(
             "true",
             "yes",
         }
-    if not live_enabled:
-        return [FixtureAdapter([Path(p) for p in catalog_snapshot_paths])]
-    return live_adapters()
+    if live_enabled:
+        return live_adapters()
+
+    mocks = mock_supplier_snapshots or {}
+    adapters: list[SupplierAdapter] = []
+    if catalog_snapshot_paths or not mocks:
+        adapters.append(FixtureAdapter([Path(p) for p in catalog_snapshot_paths]))
+    for supplier_value in sorted(mocks):
+        adapters.append(
+            FixtureAdapter([Path(mocks[supplier_value])], supplier=SupplierId(supplier_value))
+        )
+    return adapters
 
 
 def live_adapters(
@@ -223,6 +234,23 @@ class SourcingChainResult:
     excluded_requirement_ids: list[str]
 
 
+def _fixture_catalog_notice(adapters: list[SupplierAdapter]) -> list[StageIssue]:
+    if not any(isinstance(a, FixtureAdapter) for a in adapters):
+        return []
+    return [
+        StageIssue(
+            severity=Severity.WARNING,
+            code="using_fixture_catalog",
+            message=(
+                "Searching offline mock/fixture catalogs, not live suppliers: SKUs, prices "
+                "and stock are fictional and parts outside them will not be found. Set "
+                f"{_LIVE_SUPPLIERS_ENV_VAR}=1 with supplier credentials to search live "
+                "catalogs."
+            ),
+        )
+    ]
+
+
 def run_sourcing_chain(
     requirements: list[NormalizedRequirement],
     adapters: list[SupplierAdapter],
@@ -250,6 +278,7 @@ def run_sourcing_chain(
     )
 
     combined_issues = [
+        *_fixture_catalog_notice(adapters),
         *expand_result.issues,
         *source_result.issues,
         *policy_result.issues,

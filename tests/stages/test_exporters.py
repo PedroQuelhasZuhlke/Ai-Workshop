@@ -205,21 +205,55 @@ def test_unapproved_plan_is_rejected() -> None:
     assert any("approv" in i.message for i in blocking)
 
 
-def test_stale_offer_snapshot_is_rejected() -> None:
-    plan = _make_plan([_line("REQ-R1", SupplierId.MOUSER, snapshot_id="SNAP-STALE")])
+def test_unacknowledged_stale_offer_warning_is_rejected() -> None:
+    plan = _make_plan(
+        [_line("REQ-R1", SupplierId.MOUSER)],
+        warnings=[
+            PlanWarning(
+                kind=PlanWarningKind.STALE_OFFER,
+                requirement_id="REQ-R1",
+                message="offer fetched 200 days ago",
+            )
+        ],
+    )
+    result = ExportStage().run(_base_input(plan, SupplierId.MOUSER, ExportFormat.CSV), _make_ctx())
+    assert result.output is None
+    blocking = [i for i in result.issues if i.severity == Severity.BLOCKING]
+    assert blocking
+    assert any("stale" in i.message for i in blocking)
+
+
+def test_acknowledged_stale_offer_warning_allows_export_and_is_recorded() -> None:
+    """An engineer may override a *specific* stale line by acknowledging its
+    requirement at approval time (`stale_offer_snapshot_ids`, despite its name --
+    see `exporters.validation.check_no_stale_offers`'s docstring). The override
+    must still be visible in the run's own issues, not just the approval ledger."""
+    plan = _make_plan(
+        [_line("REQ-R1", SupplierId.MOUSER)],
+        warnings=[
+            PlanWarning(
+                kind=PlanWarningKind.STALE_OFFER,
+                requirement_id="REQ-R1",
+                message="offer fetched 200 days ago",
+            )
+        ],
+    )
     result = ExportStage().run(
         _base_input(
             plan,
             SupplierId.MOUSER,
             ExportFormat.CSV,
-            stale_offer_snapshot_ids=frozenset({"SNAP-STALE"}),
+            stale_offer_snapshot_ids=frozenset({"REQ-R1"}),
         ),
         _make_ctx(),
     )
-    assert result.output is None
-    blocking = [i for i in result.issues if i.severity == Severity.BLOCKING]
-    assert blocking
-    assert any("stale" in i.message for i in blocking)
+    assert result.output is not None
+    assert not any(i.severity == Severity.BLOCKING for i in result.issues)
+    override_issues = [
+        i for i in result.issues if i.code == "exported_with_acknowledged_stale_offer"
+    ]
+    assert len(override_issues) == 1
+    assert override_issues[0].item_id == "REQ-R1"
 
 
 def test_plans_own_stale_offer_warning_is_rejected_even_without_caller_flagging_it() -> None:

@@ -19,7 +19,7 @@ from random import Random
 from typing import Any
 
 from pcbpick.contracts.candidate import PartCandidate
-from pcbpick.contracts.enums import SubstitutionTier
+from pcbpick.contracts.enums import SubstitutionTier, SupplierId
 from pcbpick.contracts.requirement import NormalizedRequirement
 from pcbpick.ingest.stage import IngestInput, IngestStage
 from pcbpick.llm.fakes import FakeLLMClient
@@ -33,6 +33,7 @@ from pcbpick.sourcing.evaluate import EvaluateStage, EvaluateStageInput
 from pcbpick.sourcing.expand import ExpandStage
 from pcbpick.sourcing.stage import SourceStage
 from pcbpick.sourcing.suppliers.fixture import FixtureAdapter
+from pcbpick.sourcing.suppliers.protocol import SupplierAdapter
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _FIXED_NOW = datetime(2026, 1, 1, tzinfo=UTC)
@@ -164,8 +165,14 @@ def _run_chain(
 
     if "source" in chain:
         assert expand_queries is not None
-        catalog_path = repo_root / inputs["catalog_snapshot"]
-        source_sr = SourceStage([FixtureAdapter([catalog_path])]).run(expand_queries, ctx)
+        if "catalog_snapshots" in inputs:
+            adapters: list[SupplierAdapter] = [
+                FixtureAdapter([repo_root / path], supplier=SupplierId(supplier))
+                for supplier, path in sorted(inputs["catalog_snapshots"].items())
+            ]
+        else:
+            adapters = [FixtureAdapter([repo_root / inputs["catalog_snapshot"]])]
+        source_sr = SourceStage(adapters).run(expand_queries, ctx)
         source_candidates = source_sr.output
         source_issues = source_sr.issues
 
