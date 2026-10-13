@@ -374,8 +374,15 @@ function CandidatesStep({
   return (
     <div className="card">
       <h3>Candidate review</h3>
-      <IssueList issues={issues.filter((i) => i.severity === "warning")} />
-      <table>
+      <ul style={{ paddingLeft: 18, margin: "8px 0" }}>
+        {issues
+          .filter((i) => i.severity === "warning")
+          .map((issue, i) => (
+            <li key={i} className="muted">
+              <span className="badge warning">{issue.item_id!.toUpperCase()}</span> {issue.message}
+            </li>
+          ))}
+      </ul>      <table>
         <thead>
           <tr>
             <th>Requirement</th>

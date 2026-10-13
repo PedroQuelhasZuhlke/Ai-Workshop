@@ -16,8 +16,7 @@ def round_up_to_multiple(value: int, multiple: int) -> int:
     """Rounds `value` up to the nearest multiple of `multiple` (`multiple` must be > 0)."""
     if multiple <= 0:
         raise ContractViolationError(f"multiple must be positive, got {multiple}")
-    remainder = value % multiple
-    return value if remainder == 0 else value + (multiple - remainder)
+    return -(-value // multiple) * multiple
 
 
 def resolve_order_qty(required_qty: int, offer: SupplierOffer) -> int:

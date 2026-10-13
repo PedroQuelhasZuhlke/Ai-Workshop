@@ -74,12 +74,6 @@ def _row_for_line(supplier: SupplierId, line: PlanLine) -> dict[str, str]:
                 "Quantity": str(line.order_qty),
                 "Customer Reference": line.requirement_id,
             }
-        case SupplierId.FARNELL:
-            return {
-                "Order Code": line.sku,
-                "Quantity": str(line.order_qty),
-                "Line Note": line.requirement_id,
-            }
         case SupplierId.FIXTURE:
             raise ContractViolationError("fixture is not a real export destination")
 

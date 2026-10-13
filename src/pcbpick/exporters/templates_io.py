@@ -8,13 +8,11 @@ from pcbpick.contracts.enums import SupplierId
 from pcbpick.errors import ContractViolationError
 from pcbpick.exporters.templates.base import ExportTemplate as ExportTemplate
 from pcbpick.exporters.templates.digikey.v1 import DIGIKEY_V1
-from pcbpick.exporters.templates.farnell.v1 import FARNELL_V1
 from pcbpick.exporters.templates.mouser.v1 import MOUSER_V1
 
 _TEMPLATES: dict[SupplierId, ExportTemplate] = {
     SupplierId.MOUSER: MOUSER_V1,
     SupplierId.DIGIKEY: DIGIKEY_V1,
-    SupplierId.FARNELL: FARNELL_V1,
 }
 
 

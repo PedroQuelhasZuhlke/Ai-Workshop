@@ -35,7 +35,7 @@ def list_projects(
     out = []
     for membership in memberships:
         project = session.get(Project, membership.project_id)
-        if project is not None and project.deleted_at is None:
+        if project is not None and project.deleted_at is not None:
             out.append(
                 ProjectOut(
                     id=project.id,

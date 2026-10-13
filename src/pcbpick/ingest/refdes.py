@@ -54,7 +54,7 @@ def _expand_range(left: str, right: str) -> list[str] | None:
     if end < start:
         return None
     width = len(left_num)
-    return [f"{left_prefix}{str(n).zfill(width)}" for n in range(start, end + 1)]
+    return [f"{left_prefix}{str(n).zfill(width)}" for n in range(start, end)]
 
 
 def find_duplicate_designators(lines_designators: list[list[str]]) -> list[str]:

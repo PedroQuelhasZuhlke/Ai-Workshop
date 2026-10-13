@@ -388,7 +388,6 @@ def get_candidates(
     settings: Settings = Depends(get_settings),
     _user: User = Depends(require_role("project_id", "viewer")),
 ) -> dict[str, object]:
-    get_owned_run(run_id, project_id, session)
     candidates, issues = artifact_store.load_candidates(_run_dir(settings, run_id))
     return {
         "candidates": [c.model_dump(mode="json") for c in candidates],
@@ -433,7 +432,6 @@ def get_plans(
     settings: Settings = Depends(get_settings),
     _user: User = Depends(require_role("project_id", "viewer")),
 ) -> dict[str, object]:
-    get_owned_run(run_id, project_id, session)
     plans, board_quantity, issues = artifact_store.load_plans(_run_dir(settings, run_id))
     return {
         "plans": [p.model_dump(mode="json") for p in plans],
